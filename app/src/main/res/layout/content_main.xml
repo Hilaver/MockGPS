@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    app:layout_behavior="@string/appbar_scrolling_view_behavior"
+    tools:context=".MainActivity"
+    tools:showIn="@layout/app_bar_main">
+
+
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <com.baidu.mapapi.map.MapView
+            android:id="@+id/bmapView"
+            android:layout_width="fill_parent"
+            android:layout_height="fill_parent"
+            android:clickable="true" />
+
+        <!--<LinearLayout-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentRight="true"-->
+        <!--android:layout_marginTop="80dip"-->
+        <!--android:background="#D000"-->
+        <!--android:minWidth="100dip"-->
+        <!--android:orientation="vertical"-->
+        <!--android:padding="2dp" >-->
+
+        <!--<RadioGroup-->
+        <!--android:id="@+id/radioGroup"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:contentDescription="定位icon" >-->
+
+        <!--<RadioButton-->
+        <!--android:id="@+id/defaulticon"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:checked="true"-->
+        <!--android:text="默认图标" >-->
+        <!--</RadioButton>-->
+
+        <!--<RadioButton-->
+        <!--android:id="@+id/customicon"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="自定义图标" >-->
+        <!--</RadioButton>-->
+        <!--</RadioGroup>-->
+        <!--</LinearLayout>-->
+
+        <!--<Button-->
+        <!--android:id="@+id/button1"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:layout_alignParentRight="true"-->
+        <!--android:layout_alignParentTop="true"-->
+        <!--android:layout_marginRight="25dp"-->
+        <!--android:layout_marginTop="10dip" />-->
+
+
+        <RadioGroup
+            android:id="@+id/RadioGroupLocType"
+            android:layout_width="90dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="4dip"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/normalloc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="正常" />
+
+            <RadioButton
+                android:id="@+id/trackloc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="跟踪" />
+
+            <RadioButton
+                android:id="@+id/compassloc"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="罗盘" />
+        </RadioGroup>
+
+
+        <RadioGroup
+            android:id="@+id/RadioGroup"
+            android:layout_width="90dp"
+            android:layout_height="wrap_content"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginRight="5dp"
+            android:layout_marginTop="100dip"
+            android:orientation="vertical">
+
+            <RadioButton
+                android:id="@+id/normal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:checked="true"
+                android:text="普通图" />
+
+            <RadioButton
+                android:id="@+id/statellite"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="卫星图" />
+        </RadioGroup>
+
+        <CheckBox
+            android:id="@+id/traffice"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="5dp"
+            android:layout_marginTop="4dip"
+            android:layout_weight="1"
+            android:checked="false"
+            android:onClick="setTraffic"
+            android:text="路况图" />
+
+        <CheckBox
+            android:id="@+id/baiduHeatMap"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:layout_marginLeft="90dp"
+            android:layout_marginTop="4dip"
+            android:layout_weight="1"
+            android:checked="false"
+            android:onClick="setBaiduHeatMap"
+            android:text="热力图" />
+
+
+    </RelativeLayout>
+
+
+
+    <!--<LinearLayout-->
+        <!--android:layout_width="match_parent"-->
+        <!--android:layout_height="match_parent"-->
+        <!--android:orientation="vertical" >-->
+
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_marginBottom="5dp"-->
+            <!--android:layout_weight="1"-->
+            <!--android:orientation="horizontal" >-->
+
+            <!--<fragment-->
+                <!--android:id="@+id/map1"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:layout_weight="1"-->
+                <!--class="com.baidu.mapapi.map.SupportMapFragment" />-->
+
+            <!--<fragment-->
+                <!--android:id="@+id/map2"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:layout_weight="1"-->
+                <!--class="com.baidu.mapapi.map.SupportMapFragment" />-->
+        <!--</LinearLayout>-->
+
+        <!--<LinearLayout-->
+            <!--android:layout_width="match_parent"-->
+            <!--android:layout_height="match_parent"-->
+            <!--android:layout_weight="1"-->
+            <!--android:orientation="horizontal" >-->
+
+            <!--<fragment-->
+                <!--android:id="@+id/map3"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:layout_marginRight="5dp"-->
+                <!--android:layout_weight="1"-->
+                <!--class="com.baidu.mapapi.map.SupportMapFragment" />-->
+
+            <!--<fragment-->
+                <!--android:id="@+id/map4"-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="match_parent"-->
+                <!--android:layout_weight="1"-->
+                <!--class="com.baidu.mapapi.map.SupportMapFragment" />-->
+        <!--</LinearLayout>-->
+
+    <!--</LinearLayout>-->
+
+
+
+    <!--<TextView-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!--android:text="Hello World!"-->
+        <!--app:layout_constraintBottom_toBottomOf="parent"-->
+        <!--app:layout_constraintLeft_toLeftOf="parent"-->
+        <!--app:layout_constraintRight_toRightOf="parent"-->
+        <!--app:layout_constraintTop_toTopOf="parent" />-->
+    <!--<com.baidu.mapapi.map.MapView-->
+        <!--android:id="@+id/bmapView"-->
+        <!--android:layout_width="fill_parent"-->
+        <!--android:layout_height="fill_parent"-->
+        <!--android:clickable="true" />-->
+
+</android.support.constraint.ConstraintLayout>

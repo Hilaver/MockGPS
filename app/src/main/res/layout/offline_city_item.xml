@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!--<LinearLayout-->
+    <!--android:layout_width="fill_parent"-->
+    <!--android:layout_height="100dp"-->
+    <!--android:layout_gravity="center_vertical"-->
+    <!--android:layout_weight="1"-->
+    <!--android:gravity="center_vertical"-->
+    <!--android:orientation="horizontal">-->
+
+
+    <!--<android.support.v7.widget.CardView-->
+    <!--xmlns:app="http://schemas.android.com/apk/res-auto"-->
+    <!--android:id="@+id/cardview"-->
+    <!--app:cardElevation="5dp"-->
+    <!--app:cardCornerRadius="13dp"-->
+    <!--app:cardBackgroundColor="@color/darkslategray"-->
+    <!--android:layout_margin="8dp"-->
+    <!--android:layout_gravity="center"-->
+    <!--android:layout_height="90dp"-->
+    <!--android:layout_width="match_parent">-->
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_gravity="center_vertical"
+        android:layout_weight="1"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginLeft="20dp"
+            android:layout_weight="4"
+            android:gravity="center"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/CityNameText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_gravity="left"
+                android:text="成都市"
+                android:textSize="20sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="80dp"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:layout_marginRight="20dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/CitySizeText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="12.5M" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/CityIDText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="0"
+            android:visibility="gone" />
+        <!--<TextView-->
+        <!--android:id="@+id/BDLatLngText"-->
+        <!--android:layout_width="wrap_content"-->
+        <!--android:layout_height="wrap_content"-->
+        <!---->
+        <!--android:text="[经度:104.123456789 纬度:30.123456789]" />-->
+    </LinearLayout>
+    <!--</android.support.v7.widget.CardView>-->
+    <!--</LinearLayout>-->
+</LinearLayout>
