@@ -4,4 +4,6 @@
 
 需要开启 开发者选项中的位置模拟
 
-有问题或者bug的话，就发邮件吧  [565563269@qq.com]
+代码的原理在 https://blog.csdn.net/Hilavergil/article/details/81907548
+
+有问题或者bug的话，就发邮件吧 [565563269@qq.com]
