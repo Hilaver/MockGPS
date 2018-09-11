@@ -9,3 +9,7 @@ Author：老张
 代码的原理在 https://blog.csdn.net/Hilavergil/article/details/81907548
 
 有问题或者bug的话，就发邮件吧 [565563269@qq.com]
+
+Version 1.9.1
+  修改 无网络时定位出错的Bug
+  修改 无网络时离线地图下载导致进程崩溃的Bug
