@@ -85,6 +85,10 @@ import com.baidu.mapapi.search.poi.PoiIndoorResult;
 import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
 import com.baidu.mapapi.search.poi.PoiSearch;
+import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
+import com.baidu.mapapi.search.sug.SuggestionResult;
+import com.baidu.mapapi.search.sug.SuggestionSearch;
+import com.baidu.mapapi.search.sug.SuggestionSearchOption;
 import com.example.service.HistoryDBHelper;
 import com.example.service.MockGpsService;
 import com.example.service.Utils;
@@ -139,7 +143,7 @@ public class MainActivity extends AppCompatActivity
     private double mCurrentLat = 0.0;
     private double mCurrentLon = 0.0;
     private float mCurrentAccracy;
-    private String mCurrentCity;
+    private String mCurrentCity="成都市";
     private String mCurrentAddr;
     /**
      * 当前地点击点
@@ -173,6 +177,7 @@ public class MainActivity extends AppCompatActivity
     private LinearLayout mlinearLayout;
     private MenuItem searchItem;
     private boolean isSubmit;
+    private SuggestionSearch mSuggestionSearch;
     ////////
 
 
@@ -254,6 +259,8 @@ public class MainActivity extends AppCompatActivity
         option.setOpenGps(true); // 打开gps
         option.setCoorType("bd09ll"); // 设置坐标类型
         option.setScanSpan(1000);
+        //启用下面这个参数好像没什么卵用
+        option.setEnableSimulateGps(false);
         mLocClient.setLocOption(option);
         mLocClient.start();
 
@@ -278,9 +285,11 @@ public class MainActivity extends AppCompatActivity
             }
         }
         //初始化POI搜索监听
-        initPoiSearchResultListener();
+//        initPoiSearchResultListener();
         //搜索结果列表的点击监听
         setSearchRetClickListener();
+        //设置搜索建议返回值监听
+        setSugSearchListener();
         //初始位置随机处理
         randomFix();
         //如果网络不可用，地图中心点置为最新定位点
@@ -534,6 +543,62 @@ public class MainActivity extends AppCompatActivity
 
         };
         poiSearch.setOnGetPoiSearchResultListener(poiSearchListener);
+    }
+    //检索建议
+    private void setSugSearchListener(){
+        mSuggestionSearch=SuggestionSearch.newInstance();
+        OnGetSuggestionResultListener listener = new OnGetSuggestionResultListener() {
+            public void onGetSuggestionResult(SuggestionResult res) {
+
+                if (res == null || res.getAllSuggestions() == null) {
+                    //未找到相关结果
+                    DisplayToast("没有找到检索结果");
+                    return;
+                }
+                //获取在线建议检索结果
+                else{
+                    if (isSubmit) {
+//                        mBaiduMap.clear();
+                        MyPoiOverlay poiOverlay = new MyPoiOverlay(mBaiduMap);
+                        poiOverlay.setSugData(res);// 设置POI数据
+                        mBaiduMap.setOnMarkerClickListener(poiOverlay);
+                        poiOverlay.addToMap();// 将所有的overlay添加到地图上
+                        poiOverlay.zoomToSpan();
+                        mlinearLayout.setVisibility(View.INVISIBLE);
+                        //标注搜索点 关闭搜索列表
+//                        searchView.clearFocus();  //可以收起键盘
+                        searchItem.collapseActionView(); //关闭搜索视图
+                        isSubmit = false;
+
+                    }else{
+                        List<Map<String, Object>> data = new ArrayList<Map<String, Object>>();
+                        int retCnt = res.getAllSuggestions().size();
+                        for (int i = 0; i < retCnt; i++) {
+                            if (res.getAllSuggestions().get(i).pt==null){
+                                continue;
+                            }
+                            Map<String, Object> poiItem = new HashMap<String, Object>();
+                            poiItem.put("key_name", res.getAllSuggestions().get(i).key);
+                            poiItem.put("key_addr", res.getAllSuggestions().get(i).city+" "+res.getAllSuggestions().get(i).district);
+                            poiItem.put("key_lng", "" + res.getAllSuggestions().get(i).pt.longitude);
+                            poiItem.put("key_lat", "" + res.getAllSuggestions().get(i).pt.latitude);
+                            data.add(poiItem);
+                        }
+                        simAdapt = new SimpleAdapter(
+                                MainActivity.this,
+                                data,
+                                R.layout.poi_searchr_item,
+                                new String[]{"key_name", "key_addr", "key_lng", "key_lat"},// 与下面数组元素要一一对应
+                                new int[]{R.id.poi_name, R.id.poi_addr, R.id.poi_longitude, R.id.poi_latitude});
+                        searchlist.setAdapter(simAdapt);
+//                    searchlist.setVisibility(View.VISIBLE);
+                        mlinearLayout.setVisibility(View.VISIBLE);
+                    }
+                }
+            }
+        };
+        mSuggestionSearch.setOnGetSuggestionResultListener(listener);
+
     }
 
     //城市内搜索
@@ -872,6 +937,7 @@ public class MainActivity extends AppCompatActivity
         mMapView = null;
         //poi search destroy
         poiSearch.destroy();
+        mSuggestionSearch.destroy();
         //close db
         sqLiteDatabase.close();
         super.onDestroy();
@@ -992,12 +1058,20 @@ public class MainActivity extends AppCompatActivity
                 //提交按钮的点击事件
                 //do search
                 try {
+                    //modify here
                     isSubmit = true;
-                    poiSearch.searchInCity((new PoiCitySearchOption())
-                            .city(mCurrentCity)
+//                    poiSearch.searchInCity((new PoiCitySearchOption())
+//                            .city(mCurrentCity)
+//                            .keyword(query)
+//                            .pageCapacity(10)
+//                            .pageNum(0));
+
+                    mSuggestionSearch.requestSuggestion((new SuggestionSearchOption())
+
                             .keyword(query)
-                            .pageCapacity(10)
-                            .pageNum(0));
+                            .city(mCurrentCity)
+
+                    );
                     mBaiduMap.clear();
                     mlinearLayout.setVisibility(View.INVISIBLE);
                 } catch (Exception e) {
@@ -1013,13 +1087,19 @@ public class MainActivity extends AppCompatActivity
                 //当输入框内容改变的时候回调
                 if (!newText.equals("")) {
                     //do search
-
+                    //WATCH ME
                     try {
-                        poiSearch.searchInCity((new PoiCitySearchOption())
-                                .city(mCurrentCity)
+                        mSuggestionSearch.requestSuggestion((new SuggestionSearchOption())
+
                                 .keyword(newText)
-                                .pageCapacity(30)
-                                .pageNum(0));
+                                .city(mCurrentCity)
+
+                        );
+//                        poiSearch.searchInCity((new PoiCitySearchOption())
+//                                .city(mCurrentCity)
+//                                .keyword(newText)
+//                                .pageCapacity(30)
+//                                .pageNum(0));
                     } catch (Exception e) {
                         DisplayToast("搜索失败，请检查网络连接");
                         e.printStackTrace();
@@ -1360,12 +1440,28 @@ public class MainActivity extends AppCompatActivity
         @Override
         public boolean onPoiClick(int arg0) {
             super.onPoiClick(arg0);
-            PoiInfo poiInfo = getPoiResult().getAllPoi().get(arg0);
-            currentPt = poiInfo.location;
-            transformCoordinate(Double.toString(currentPt.longitude), Double.toString(currentPt.latitude));
-            // 检索poi详细信息
-            poiSearch.searchPoiDetail(new PoiDetailSearchOption()
-                    .poiUid(poiInfo.uid));
+            PoiResult poiResult=getPoiResult();
+            if (poiResult!=null && poiResult.getAllPoi()!=null){
+                PoiInfo poiInfo;
+                poiInfo = poiResult.getAllPoi().get(arg0);
+                currentPt = poiInfo.location;
+                transformCoordinate(Double.toString(currentPt.longitude), Double.toString(currentPt.latitude));
+                // 检索poi详细信息
+                poiSearch.searchPoiDetail(new PoiDetailSearchOption()
+                        .poiUid(poiInfo.uid));
+            }
+            SuggestionResult suggestionResult=getSugResult();
+            if (suggestionResult!=null && suggestionResult.getAllSuggestions()!=null){
+                SuggestionResult.SuggestionInfo suggestionInfo;
+                suggestionInfo=suggestionResult.getAllSuggestions().get(arg0);
+                currentPt = suggestionInfo.pt;
+                transformCoordinate(Double.toString(currentPt.longitude), Double.toString(currentPt.latitude));
+                // 检索sug详细信息
+                poiSearch.searchPoiDetail(new PoiDetailSearchOption()
+                        .poiUid(suggestionInfo.uid));
+            }
+
+
             return true;
         }
     }
