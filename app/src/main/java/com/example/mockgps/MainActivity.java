@@ -231,7 +231,7 @@ public class MainActivity extends AppCompatActivity
 
 
         //获取权限
-//        getPersimmions();
+        getPersimmions();
         /////
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);//获取传感器管理服务
         mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
@@ -260,7 +260,7 @@ public class MainActivity extends AppCompatActivity
         option.setCoorType("bd09ll"); // 设置坐标类型
         option.setScanSpan(1000);
         //启用下面这个参数好像没什么卵用
-        option.setEnableSimulateGps(false);
+//        option.setEnableSimulateGps(false);
         mLocClient.setLocOption(option);
         mLocClient.start();
 
