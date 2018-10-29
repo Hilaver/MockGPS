@@ -64,21 +64,15 @@ public class PoiOverlay extends OverlayManager {
                 if (mPoiResult.getAllPoi().get(i).location == null) {
                     continue;
                 }
-//                curInd = i;
                 Bundle bundle = new Bundle();
                 bundle.putInt("index", curInd++);
                 markerList.add(new MarkerOptions()
                         .icon(BitmapDescriptorFactory.fromAssetWithDpi("ic_location_on_black_36dp.png")).extraInfo(bundle)
                         .position(mPoiResult.getAllPoi().get(i).location));
-//            markerList.add(new MarkerOptions()
-//                    .icon(BitmapDescriptorFactory.fromAssetWithDpi("Icon_mark"
-//                            + markerSize + ".png")).extraInfo(bundle)
-//                    .position(mPoiResult.getAllPoi().get(i).location));
 
             }
         }
         if (!(mSuggestionResult == null || mSuggestionResult.getAllSuggestions() == null)){
-//            curInd++;
             for (int j = 0; j < mSuggestionResult.getAllSuggestions().size(); j++) {
                 if (mSuggestionResult.getAllSuggestions().get(j).pt == null) {
                     continue;
