@@ -285,7 +285,7 @@ public class MainActivity extends AppCompatActivity
             }
         }
         //初始化POI搜索监听
-//        initPoiSearchResultListener();
+        initPoiSearchResultListener();
         //搜索结果列表的点击监听
         setSearchRetClickListener();
         //设置搜索建议返回值监听
@@ -1433,7 +1433,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     class MyPoiOverlay extends PoiOverlay {
-        public MyPoiOverlay(BaiduMap arg0) {
+        private MyPoiOverlay(BaiduMap arg0) {
             super(arg0);
         }
 
@@ -1460,8 +1460,6 @@ public class MainActivity extends AppCompatActivity
                 poiSearch.searchPoiDetail(new PoiDetailSearchOption()
                         .poiUid(suggestionInfo.uid));
             }
-
-
             return true;
         }
     }
