@@ -59,7 +59,7 @@
 
 
         <LinearLayout
-            android:id="@+id/searchlinear"
+            android:id="@+id/search_linear"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="#ddffffff"
@@ -72,6 +72,23 @@
                 android:layout_height="wrap_content">
             </ListView>
         </LinearLayout>
+
+
+        <LinearLayout
+            android:id="@+id/search_history_linear"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#ddffffff"
+            android:visibility="gone"
+            android:layout_marginTop="?attr/actionBarSize">
+            <ListView
+                android:id="@+id/search_history_list_view"
+                android:layout_width="match_parent"
+                android:layout_margin="10dp"
+                android:layout_height="wrap_content">
+            </ListView>
+        </LinearLayout>
+
 
 
     </FrameLayout>
