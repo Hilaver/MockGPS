@@ -92,7 +92,7 @@ public class HistoryActivity extends AppCompatActivity {
             public boolean onItemLongClick(AdapterView<?> parent, final View view, int position, long id) {
                 new AlertDialog.Builder(HistoryActivity.this)
                         .setTitle("Warning")//这里是表头的内容
-                        .setMessage("确定要删除该项历史纪录吗?")//这里是中间显示的具体信息
+                        .setMessage("确定要删除该项历史记录吗?")//这里是中间显示的具体信息
                         .setPositiveButton("确定",
                                 new DialogInterface.OnClickListener() {
                                     @Override
