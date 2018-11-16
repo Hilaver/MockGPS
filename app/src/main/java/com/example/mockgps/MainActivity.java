@@ -910,11 +910,13 @@ public class MainActivity extends AppCompatActivity
     //提醒开启位置模拟的弹框
     private void setDialog() {
         //判断是否开启开发者选项
-        boolean enableAdb = (Settings.Secure.getInt(getContentResolver(), Settings.Secure.ADB_ENABLED, 0) > 0);
-        if (!enableAdb) {
-            DisplayToast("请打先开开发者选项");
-            return;
-        }
+//        boolean enableAdb = (Settings.Secure.getInt(getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION, 0) > 0);
+//        if (!enableAdb) {
+//            DisplayToast("请打先开开发者选项");
+//            return;
+//        }
+
+
 
         new AlertDialog.Builder(this)
                 .setTitle("启用位置模拟")//这里是表头的内容
@@ -923,8 +925,13 @@ public class MainActivity extends AppCompatActivity
                         new DialogInterface.OnClickListener() {
                             @Override
                             public void onClick(DialogInterface dialog, int which) {
-                                Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
-                                startActivity(intent);
+                                try {
+                                    Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+                                    startActivity(intent);
+                                }catch (Exception e){
+                                    DisplayToast("无法跳转到开发者选项,请先确保您的设备已处于开发者模式");
+                                    e.printStackTrace();
+                                }
                             }
                         })//setPositiveButton里面的onClick执行的是左边按钮
                 .setNegativeButton("取消",//这个string是设置右边按钮的文字
@@ -1396,14 +1403,21 @@ public class MainActivity extends AppCompatActivity
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_setting) {
-            //判断是否开启开发者选项
-            boolean enableAdb = (Settings.Secure.getInt(getContentResolver(), Settings.Secure.ADB_ENABLED, 0) > 0);
-            if (!enableAdb) {
-                DisplayToast("请打先开开发者选项");
-            } else {
+            try {
                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
                 startActivity(intent);
+            }catch (Exception e){
+                DisplayToast("无法跳转到开发者选项,请先确保您的设备已处于开发者模式");
+                e.printStackTrace();
             }
+            //判断是否开启开发者选项
+//            boolean enableAdb = (Settings.Secure.getInt(getContentResolver(), Settings.Secure.ADB_ENABLED, 0) > 0);
+//            if (!enableAdb) {
+//                DisplayToast("请打先开开发者选项");
+//            } else {
+//                Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
+//                startActivity(intent);
+//            }
             return true;
         } else if (id == R.id.action_resetMap) {
             resetMap();
