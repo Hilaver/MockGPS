@@ -1,7 +1,9 @@
 package com.example.mockgps;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -28,11 +30,15 @@ import android.provider.Settings;
 import android.support.annotation.RequiresApi;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.SearchView;
+import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.view.Display;
 import android.view.Gravity;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -45,6 +51,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.CheckBox;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.RadioGroup;
@@ -98,6 +105,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -123,6 +131,7 @@ public class MainActivity extends AppCompatActivity
     private MockServiceReceiver mockServiceReceiver = null;
     private boolean isServiceRun = false;
     private boolean isMockServStart = false;
+    private boolean isGPSOpen = false;
 
     //sqlite相关
     //定位历史
@@ -140,7 +149,7 @@ public class MainActivity extends AppCompatActivity
     private boolean isNetworkConnected = true;
 
     // 定位相关
-    LocationClient mLocClient;
+    LocationClient mLocClient = null;
     public MyLocationListenner myListener = new MyLocationListenner();
     private MyLocationConfiguration.LocationMode mCurrentMode;
     BitmapDescriptor mCurrentMarker;
@@ -161,7 +170,7 @@ public class MainActivity extends AppCompatActivity
 
 
     public MapView mMapView;
-    public static BaiduMap mBaiduMap;
+    public static BaiduMap mBaiduMap = null;
 
     // UI相关
     RadioGroup.OnCheckedChangeListener radioButtonListener;
@@ -200,6 +209,7 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
         //sqlite
         try {
             historyDBHelper = new HistoryDBHelper(getApplicationContext());
@@ -256,25 +266,28 @@ public class MainActivity extends AppCompatActivity
             isNetworkConnected = false;
         }
 
+        //gps是否开启
+//        isGPSOpen=isGpsOpened();
+        if (!(isGPSOpen = isGpsOpened())) {
+            DisplayToast("GPS定位未开启，请先打开GPS定位服务");
+        }
 
         // 地图初始化
         mMapView = (MapView) findViewById(R.id.bmapView);
         mBaiduMap = mMapView.getMap();
         initListener();
+
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
-        // 定位初始化
-        mLocClient = new LocationClient(this);
-        mLocClient.registerLocationListener(myListener);
-        LocationClientOption option = new LocationClientOption();
-        option.setIsNeedAddress(true);
-        option.setOpenGps(true); // 打开gps
-        option.setCoorType("bd09ll"); // 设置坐标类型
-        option.setScanSpan(1000);
-        //启用下面这个参数好像没什么卵用
-//        option.setEnableSimulateGps(false);
-        mLocClient.setLocOption(option);
-        mLocClient.start();
+
+        //开启定位图层
+        if (!isGPSOpen) {
+            //如果未打开GPS，跳转到定位设置界面
+            showGpsDialog();
+        } else {
+            //如果GPS定位开启，则打开定位图层
+            openLocateLayer();
+        }
 
         //poi search 实例化
         poiSearch = PoiSearch.newInstance();
@@ -315,15 +328,138 @@ public class MainActivity extends AppCompatActivity
         MapStatusUpdate mapstatusupdate = MapStatusUpdateFactory.newLatLng(latLng);
         mBaiduMap.setMapStatus(mapstatusupdate);
 
+        //一个子线程，检测GPS定位是否开启
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // 写子线程中的操作
+                while (!isGpsOpened()) {
+                    Log.d("GPS", "gps not open");
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+                isGPSOpen = true;
+                Log.d("GPS", "gps opened");
+                //如果GPS定位开启，打开定位图层
+                openLocateLayer();
+            }
+        }).start();
 
-        func();
+//        func();
+        //for debug
 
     }
 
     //for debug
     public void func() {
+        // for test
 
 
+    }
+
+    //显示开启GPS的提示
+    private void showGpsDialog() {
+        new AlertDialog.Builder(MainActivity.this)
+                .setTitle("Tips")//这里是表头的内容
+                .setMessage("是否开启GPS定位服务?")//这里是中间显示的具体信息
+                .setPositiveButton("确定",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                                startActivityForResult(intent, 0);
+                            }
+                        })
+                .setNegativeButton("取消",
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                .show();
+    }
+
+    //显示输入经纬度的对话框
+    public void showLatlngDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
+        builder.setTitle("输入经度和纬度(BD09坐标系)");
+        //    通过LayoutInflater来加载一个xml的布局文件作为一个View对象
+        View view = LayoutInflater.from(MainActivity.this).inflate(R.layout.latlng_dialog, null);
+        //    设置我们自己定义的布局文件作为弹出框的Content
+        builder.setView(view);
+
+        final EditText dialog_lng = (EditText) view.findViewById(R.id.dialog_longitude);
+        final EditText dialog_lat = (EditText) view.findViewById(R.id.dialog_latitude);
+
+        builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                String dialog_lng_str = "", dialog_lat_str = "";
+                try {
+                    dialog_lng_str = dialog_lng.getText().toString().trim();
+                    dialog_lat_str = dialog_lat.getText().toString().trim();
+                    double dialog_lng_double = Double.valueOf(dialog_lng_str);
+                    double dialog_lat_double = Double.valueOf(dialog_lat_str);
+//                    DisplayToast("经度: " + dialog_lng_str + ", 纬度: " + dialog_lat_str);
+                    if (dialog_lng_double > 180.0 || dialog_lng_double < -180.0 || dialog_lat_double > 90.0 || dialog_lat_double < -90.0) {
+                        DisplayToast("经纬度超出限制!\n-180.0<经度<180.0\n-90.0<纬度<90.0");
+                    } else {
+                        currentPt = new LatLng(dialog_lat_double, dialog_lng_double);
+                        MapStatusUpdate mapstatusupdate = MapStatusUpdateFactory.newLatLng(currentPt);
+                        //对地图的中心点进行更新
+                        mBaiduMap.setMapStatus(mapstatusupdate);
+                        updateMapState();
+                        transformCoordinate(dialog_lng_str, dialog_lat_str);
+                    }
+                } catch (Exception e) {
+                    DisplayToast("获取经纬度出错,请检查输入是否正确");
+                    e.printStackTrace();
+                }
+            }
+        });
+        builder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+            }
+        });
+        builder.show();
+    }
+
+    //判断GPS是否打开
+    private boolean isGpsOpened() {
+        LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    //开启百度地图的定位图层
+    private void openLocateLayer() {
+        // 定位初始化
+        mLocClient = new LocationClient(this);
+        mLocClient.registerLocationListener(myListener);
+        LocationClientOption option = new LocationClientOption();
+        option.setIsNeedAddress(true);
+        option.setOpenGps(true); // 打开gps
+        option.setCoorType("bd09ll"); // 设置坐标类型
+        option.setScanSpan(1000);
+        mLocClient.setLocOption(option);
+        mLocClient.start();
+    }
+
+    //获取IMEI
+    public String getIMEI(Context context, int slotId) {
+        try {
+            TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+            assert manager != null;
+            Method method = manager.getClass().getMethod("getImei", int.class);
+            String imei = (String) method.invoke(manager, slotId);
+            Log.d("IMEI", imei);
+            return imei;
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     //获取查询历史
@@ -453,41 +589,47 @@ public class MainActivity extends AppCompatActivity
             @Override
             public void onClick(View view) {
                 /////
-                if (!(isMockLocOpen = isAllowMockLocation())) {
-                    setDialog();
+                if (!isGPSOpen) {
+                    //如果GPS未开启
+                    showGpsDialog();
                 } else {
-                    if (!isMockServStart && !isServiceRun) {
-                        Log.d("DEBUG", "current pt is " + currentPt.longitude + "  " + currentPt.latitude);
-                        updateMapState();
-                        //start mock location service
-                        Intent mockLocServiceIntent = new Intent(MainActivity.this, MockGpsService.class);
-                        mockLocServiceIntent.putExtra("key", latLngInfo);
-                        //isFisrtUpdate=false;
-                        //save record
-                        updatePositionInfo();
-                        //insert end
-                        if (Build.VERSION.SDK_INT >= 26) {
-                            startForegroundService(mockLocServiceIntent);
-                            Log.d("DEBUG", "startForegroundService");
-                        } else {
-                            startService(mockLocServiceIntent);
-                            Log.d("DEBUG", "startService");
-                        }
-                        isMockServStart = true;
-                        Snackbar.make(view, "位置模拟已开启", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                        fab.setVisibility(View.INVISIBLE);
-                        fabStop.setVisibility(View.VISIBLE);
-                        //track
-                        grouploc.check(R.id.trackloc);
+                    if (!(isMockLocOpen = isAllowMockLocation())) {
+                        setDialog();
                     } else {
-                        Snackbar.make(view, "位置模拟已在运行", Snackbar.LENGTH_LONG)
-                                .setAction("Action", null).show();
-                        fab.setVisibility(View.INVISIBLE);
-                        fabStop.setVisibility(View.VISIBLE);
-                        isMockServStart = true;
+                        if (!isMockServStart && !isServiceRun) {
+                            Log.d("DEBUG", "current pt is " + currentPt.longitude + "  " + currentPt.latitude);
+                            updateMapState();
+                            //start mock location service
+                            Intent mockLocServiceIntent = new Intent(MainActivity.this, MockGpsService.class);
+                            mockLocServiceIntent.putExtra("key", latLngInfo);
+                            //isFisrtUpdate=false;
+                            //save record
+                            updatePositionInfo();
+                            //insert end
+                            if (Build.VERSION.SDK_INT >= 26) {
+                                startForegroundService(mockLocServiceIntent);
+                                Log.d("DEBUG", "startForegroundService:MOCK_GPS");
+                            } else {
+                                startService(mockLocServiceIntent);
+                                Log.d("DEBUG", "startService:MOCK_GPS");
+                            }
+                            isMockServStart = true;
+                            Snackbar.make(view, "位置模拟已开启", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                            fab.setVisibility(View.INVISIBLE);
+                            fabStop.setVisibility(View.VISIBLE);
+                            //track
+                            grouploc.check(R.id.trackloc);
+                        } else {
+                            Snackbar.make(view, "位置模拟已在运行", Snackbar.LENGTH_LONG)
+                                    .setAction("Action", null).show();
+                            fab.setVisibility(View.INVISIBLE);
+                            fabStop.setVisibility(View.VISIBLE);
+                            isMockServStart = true;
+                        }
                     }
                 }
+
             }
         });
 
@@ -574,7 +716,7 @@ public class MainActivity extends AppCompatActivity
 //                    DisplayToast("lng is " + lng + "lat is " + lat);
                     currentPt = new LatLng(Double.valueOf(lat), Double.valueOf(lng));
                     MapStatusUpdate mapstatusupdate = MapStatusUpdateFactory.newLatLng(currentPt);
-                    //对地图的中心点进行更新，
+                    //对地图的中心点进行更新
                     mBaiduMap.setMapStatus(mapstatusupdate);
                     updateMapState();
                     transformCoordinate(lng, lat);
@@ -639,7 +781,7 @@ public class MainActivity extends AppCompatActivity
 
             }
         });
-        historySearchlist.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener(){
+        historySearchlist.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, final View view, int position, long id) {
 
@@ -917,7 +1059,6 @@ public class MainActivity extends AppCompatActivity
 //        }
 
 
-
         new AlertDialog.Builder(this)
                 .setTitle("启用位置模拟")//这里是表头的内容
                 .setMessage("请在开发者选项->选择模拟位置信息应用中进行设置")//这里是中间显示的具体信息
@@ -928,7 +1069,7 @@ public class MainActivity extends AppCompatActivity
                                 try {
                                     Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
                                     startActivity(intent);
-                                }catch (Exception e){
+                                } catch (Exception e) {
                                     DisplayToast("无法跳转到开发者选项,请先确保您的设备已处于开发者模式");
                                     e.printStackTrace();
                                 }
@@ -1186,7 +1327,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     public void DisplayToast(String str) {
-        Toast toast = Toast.makeText(this, str, Toast.LENGTH_LONG);
+        Toast toast = Toast.makeText(MainActivity.this, str, Toast.LENGTH_LONG);
         toast.setGravity(Gravity.TOP, 0, 220);
         toast.show();
     }
@@ -1406,7 +1547,7 @@ public class MainActivity extends AppCompatActivity
             try {
                 Intent intent = new Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS);
                 startActivity(intent);
-            }catch (Exception e){
+            } catch (Exception e) {
                 DisplayToast("无法跳转到开发者选项,请先确保您的设备已处于开发者模式");
                 e.printStackTrace();
             }
@@ -1421,6 +1562,8 @@ public class MainActivity extends AppCompatActivity
             return true;
         } else if (id == R.id.action_resetMap) {
             resetMap();
+        } else if (id == R.id.action_input) {
+            showLatlngDialog();
         }
 
         return super.onOptionsItemSelected(item);
@@ -1455,9 +1598,9 @@ public class MainActivity extends AppCompatActivity
             i.putExtra(Intent.EXTRA_EMAIL,
                     new String[]{"hilavergil@gmail.com"});
             i.putExtra(Intent.EXTRA_SUBJECT, "SUGGESTION");
-//            i.putExtra(Intent.EXTRA_TEXT, "非常感谢您的宝贵意见，我会努力做得更好。");
             startActivity(Intent.createChooser(i,
                     "Select email application."));
+
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -1470,11 +1613,13 @@ public class MainActivity extends AppCompatActivity
         //参数坐标系：bd09
 //        boolean isInCHN=false;
         final double error = 0.00000001;
-        final String mcode = "52:67:11:2E:F4:56:92:4F:3D:C9:A7:DD:CA:80:D8:29:C1:E1:0A:96;com.example.mockgps";
-        final String ak = "8geZBnkT8aQ9zwWownqr9ZSesAfxnGbM";
+//        final String mcode = "9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps";
+        final String mcode = getResources().getString(R.string.safecode);
+        final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
         //判断bd09坐标是否在国内
         String mapApiUrl = "http://api.map.baidu.com/geoconv/v1/?coords=" + longitude + "," + latitude +
                 "&from=5&to=3&ak=" + ak + "&mcode=" + mcode;
+//        Log.d("HTTP", mapApiUrl);
         //bd09坐标转gcj02
         StringRequest stringRequest = new StringRequest(mapApiUrl,
                 new Response.Listener<String>() {
@@ -1484,7 +1629,7 @@ public class MainActivity extends AppCompatActivity
                             JSONObject getRetJson = new JSONObject(response);
                             //如果api接口转换成功
                             if (Integer.valueOf(getRetJson.getString("status")) == 0) {
-                                Log.d("HTTP", "call api success");
+                                Log.d("HTTP", "call api[bd09_to_gcj02] success");
                                 JSONArray coordinateArr = getRetJson.getJSONArray("result");
                                 JSONObject coordinate = coordinateArr.getJSONObject(0);
                                 String gcj02Longitude = coordinate.getString("x");
@@ -1574,8 +1719,9 @@ public class MainActivity extends AppCompatActivity
     //根据经纬度更新位置信息 并插表
     private void updatePositionInfo() {
         //参数坐标系：bd09
-        final String mcode = "52:67:11:2E:F4:56:92:4F:3D:C9:A7:DD:CA:80:D8:29:C1:E1:0A:96;com.example.mockgps";
-        final String ak = "8geZBnkT8aQ9zwWownqr9ZSesAfxnGbM";
+//        final String mcode = "9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps";
+        final String mcode = getResources().getString(R.string.safecode);
+        final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
         //bd09坐标的位置信息
         String mapApiUrl = "http://api.map.baidu.com/geocoder/v2/?location=" + currentPt.latitude + "," + currentPt.longitude + "&output=json&pois=1&ak=" + ak + "&mcode=" + mcode;
         StringRequest stringRequest = new StringRequest(mapApiUrl,
@@ -1586,7 +1732,7 @@ public class MainActivity extends AppCompatActivity
                             JSONObject getRetJson = new JSONObject(response);
                             //位置获取成功
                             if (Integer.valueOf(getRetJson.getString("status")) == 0) {
-                                Log.d("HTTP", "call api success");
+                                Log.d("HTTP", "call api[get_poisition_info] success");
                                 JSONObject posInfoJson = getRetJson.getJSONObject("result");
                                 String formatted_address = posInfoJson.getString("formatted_address");
 //                                DisplayToast(tmp);
@@ -1683,7 +1829,7 @@ public class MainActivity extends AppCompatActivity
             Bundle bundle = intent.getExtras();
             assert bundle != null;
             statusCode = bundle.getInt("statusCode");
-            Log.d("DEBUG", statusCode + "");
+//            Log.d("DEBUG", statusCode + "");
             if (statusCode == RunCode) {
                 isServiceRun = true;
             } else if (statusCode == StopCode) {

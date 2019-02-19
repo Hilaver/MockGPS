@@ -16,6 +16,12 @@
         app:showAsAction="never" />
 
     <item
+        android:id="@+id/action_input"
+        android:orderInCategory="100"
+        android:title="@string/manual_input"
+        app:showAsAction="never" />
+
+    <item
         android:id="@+id/action_resetMap"
         android:orderInCategory="100"
         android:title="@string/resetmap"

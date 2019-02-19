@@ -61,6 +61,10 @@ public class HistoryActivity extends AppCompatActivity {
         listView = (ListView) findViewById(R.id.list_view);
         noRecordText=(TextView)findViewById(R.id.no_record_textview);
 
+        if (recordArchive(sqLiteDatabase,HistoryDBHelper.TABLE_NAME)){
+            Log.d("HistoryActivity","archive success");
+        }
+
         initListView();
 
 
@@ -117,9 +121,9 @@ public class HistoryActivity extends AppCompatActivity {
         });
 
 
-        if (recordArchive(sqLiteDatabase,HistoryDBHelper.TABLE_NAME)){
-            Log.d("HistoryActivity","archive success");
-        }
+//        if (recordArchive(sqLiteDatabase,HistoryDBHelper.TABLE_NAME)){
+//            Log.d("HistoryActivity","archive success");
+//        }
 
 //        sqLiteDatabase.close();
 
