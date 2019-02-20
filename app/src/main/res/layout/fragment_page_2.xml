@@ -14,6 +14,19 @@
     <ListView
         android:id="@+id/localmaplist"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        />
+
+    <TextView
+        android:id="@+id/no_offline_map"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="100dp"
+        android:textSize="25dp"
+        android:textColor="@color/half_black"
+        android:visibility="gone"
+        android:text="暂无离线地图"/>
 
 </LinearLayout>

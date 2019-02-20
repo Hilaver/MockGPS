@@ -28,7 +28,8 @@ public class PageFragment2 extends Fragment {
 
     public static final String ARG_PAGE = "ARG_PAGE";
     private int mPage;
-
+    public static TextView noOfflineMap;
+    public static ListView localMapListView;
 //    private MKOfflineMap mOffline = null;
 
     public static ArrayList<MKOLUpdateElement> localMapList = null;
@@ -64,9 +65,18 @@ public class PageFragment2 extends Fragment {
             localMapList = new ArrayList<MKOLUpdateElement>();
         }
         //init list view
-        ListView localMapListView = (ListView) view.findViewById(R.id.localmaplist);
+        localMapListView = (ListView) view.findViewById(R.id.localmaplist);
+        noOfflineMap=(TextView)view.findViewById(R.id.no_offline_map);
         lAdapter = new LocalMapAdapter();
         localMapListView.setAdapter(lAdapter);
+        //
+        if (localMapList.size()!=0){
+            localMapListView.setVisibility(View.VISIBLE);
+            noOfflineMap.setVisibility(View.GONE);
+        }else{
+            localMapListView.setVisibility(View.GONE);
+            noOfflineMap.setVisibility(View.VISIBLE);
+        }
         return view;
     }
 
@@ -74,6 +84,14 @@ public class PageFragment2 extends Fragment {
         localMapList = mOffline.getAllUpdateInfo();
         if (localMapList == null) {
             localMapList = new ArrayList<MKOLUpdateElement>();
+        }
+        //
+        if (localMapList.size()!=0){
+            localMapListView.setVisibility(View.VISIBLE);
+            noOfflineMap.setVisibility(View.GONE);
+        }else{
+            localMapListView.setVisibility(View.GONE);
+            noOfflineMap.setVisibility(View.VISIBLE);
         }
         lAdapter.notifyDataSetChanged();
     }
