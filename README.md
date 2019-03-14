@@ -2,7 +2,7 @@
 
 Author：老张
 
-修改Android系统的GPS定位，能欺骗部分定位打卡软件
+修改Android系统的GPS定位
 
 __安装包路径: app\release\MockGPS_v1.9.4.190219_beta.apk__
 
