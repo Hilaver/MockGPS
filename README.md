@@ -4,6 +4,8 @@ Author：老张
 
 修改Android系统的GPS定位
 
+__目前仅适用于百度地图和高德地图的SDK定位，腾讯系列无法使用__
+
 __安装包路径: app\release\MockGPS_v1.9.4.190219_beta.apk__
 
 需要开启 开发者选项中的位置模拟
