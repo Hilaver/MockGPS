@@ -8,6 +8,7 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 
@@ -30,6 +31,7 @@ public class StartActivity extends AppCompatActivity {
         permissions = new ArrayList<String>();
         getPersimmions();
         isStart=false;
+        Log.d("START",""+permissions.size());
         if (permissions.size()==0){
             new Handler().postDelayed(new Runnable() {
                 public void run() {
@@ -87,9 +89,9 @@ public class StartActivity extends AppCompatActivity {
                 permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
             }
             // 读取电话状态权限
-            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
-                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
-            }
+//            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
+//                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
+//            }
 
             if (permissions.size() > 0) {
                 requestPermissions(permissions.toArray(new String[permissions.size()]), SDK_PERMISSION_REQUEST);

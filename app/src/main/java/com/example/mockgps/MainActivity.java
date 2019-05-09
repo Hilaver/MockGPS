@@ -88,6 +88,7 @@ import com.baidu.mapapi.search.poi.PoiBoundSearchOption;
 import com.baidu.mapapi.search.poi.PoiCitySearchOption;
 import com.baidu.mapapi.search.poi.PoiDetailResult;
 import com.baidu.mapapi.search.poi.PoiDetailSearchOption;
+import com.baidu.mapapi.search.poi.PoiDetailSearchResult;
 import com.baidu.mapapi.search.poi.PoiIndoorResult;
 import com.baidu.mapapi.search.poi.PoiNearbySearchOption;
 import com.baidu.mapapi.search.poi.PoiResult;
@@ -96,6 +97,7 @@ import com.baidu.mapapi.search.sug.OnGetSuggestionResultListener;
 import com.baidu.mapapi.search.sug.SuggestionResult;
 import com.baidu.mapapi.search.sug.SuggestionSearch;
 import com.baidu.mapapi.search.sug.SuggestionSearchOption;
+import com.example.log4j.LogUtil;
 import com.example.service.HistoryDBHelper;
 import com.example.service.MockGpsService;
 import com.example.service.SearchDBHelper;
@@ -105,6 +107,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -116,6 +119,10 @@ import mapapi.overlayutil.PoiOverlay;
 
 import static com.example.service.MockGpsService.RunCode;
 import static com.example.service.MockGpsService.StopCode;
+
+import org.apache.log4j.Logger;
+
+import com.example.log4j.*;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
@@ -196,19 +203,23 @@ public class MainActivity extends AppCompatActivity
     private MenuItem searchItem;
     private boolean isSubmit;
     private SuggestionSearch mSuggestionSearch;
+    //log debug
+    private static Logger log = Logger.getLogger(MainActivity.class);
     ////////
 
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-
-        Log.d("PROGRESS", "isMockServStart=" + isMockServStart);
+        LogUtil.configLog();
+        //Logger log = Logger.getLogger(MainActivity.class);
         Log.d("PROGRESS", "onCreate");
+        log.debug("PROGRESS: onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+
 
         //sqlite
         try {
@@ -220,6 +231,7 @@ public class MainActivity extends AppCompatActivity
 //            historyDBHelper.onUpgrade(locHistoryDB,locHistoryDB.getVersion(),locHistoryDB.getVersion());
         } catch (Exception e) {
             Log.e("DATABASE", "sqlite init error");
+            log.error("DATABASE: sqlite init error");
             isSQLiteStart = false;
             e.printStackTrace();
         }
@@ -280,7 +292,7 @@ public class MainActivity extends AppCompatActivity
         // 开启定位图层
         mBaiduMap.setMyLocationEnabled(true);
 
-        //开启定位图层
+        //开启GPS的提醒
         if (!isGPSOpen) {
             //如果未打开GPS，跳转到定位设置界面
             showGpsDialog();
@@ -309,8 +321,7 @@ public class MainActivity extends AppCompatActivity
         if (Build.VERSION.SDK_INT >= 23) {
             if (!Settings.canDrawOverlays(getApplicationContext())) {
                 //启动Activity让用户授权
-                Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
-                startActivity(intent);
+                setFloatWindowDialog();
             }
         }
         //初始化POI搜索监听
@@ -335,6 +346,7 @@ public class MainActivity extends AppCompatActivity
                 // 写子线程中的操作
                 while (!isGpsOpened()) {
                     Log.d("GPS", "gps not open");
+                    log.debug("GPS: gps not open");
                     try {
                         Thread.sleep(2000);
                     } catch (InterruptedException e) {
@@ -343,6 +355,7 @@ public class MainActivity extends AppCompatActivity
                 }
                 isGPSOpen = true;
                 Log.d("GPS", "gps opened");
+                log.debug("GPS: gps opened");
                 //如果GPS定位开启，打开定位图层
                 openLocateLayer();
             }
@@ -449,18 +462,18 @@ public class MainActivity extends AppCompatActivity
     }
 
     //获取IMEI
-    public String getIMEI(Context context, int slotId) {
-        try {
-            TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
-            assert manager != null;
-            Method method = manager.getClass().getMethod("getImei", int.class);
-            String imei = (String) method.invoke(manager, slotId);
-            Log.d("IMEI", imei);
-            return imei;
-        } catch (Exception e) {
-            return "";
-        }
-    }
+//    public String getIMEI(Context context, int slotId) {
+//        try {
+//            TelephonyManager manager = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+//            assert manager != null;
+//            Method method = manager.getClass().getMethod("getImei", int.class);
+//            String imei = (String) method.invoke(manager, slotId);
+//            Log.d("IMEI", imei);
+//            return imei;
+//        } catch (Exception e) {
+//            return "";
+//        }
+//    }
 
     //获取查询历史
     private List<Map<String, Object>> getSearchHistory() {
@@ -488,6 +501,7 @@ public class MainActivity extends AppCompatActivity
             cursor.close();
         } catch (Exception e) {
             Log.e("DATABASE", "query error");
+            log.error("DATABASE: query error");
             e.printStackTrace();
         }
         return data;
@@ -598,6 +612,7 @@ public class MainActivity extends AppCompatActivity
                     } else {
                         if (!isMockServStart && !isServiceRun) {
                             Log.d("DEBUG", "current pt is " + currentPt.longitude + "  " + currentPt.latitude);
+                            log.debug("current pt is " + currentPt.longitude + "  " + currentPt.latitude);
                             updateMapState();
                             //start mock location service
                             Intent mockLocServiceIntent = new Intent(MainActivity.this, MockGpsService.class);
@@ -608,23 +623,29 @@ public class MainActivity extends AppCompatActivity
                             //insert end
                             if (Build.VERSION.SDK_INT >= 26) {
                                 startForegroundService(mockLocServiceIntent);
-                                Log.d("DEBUG", "startForegroundService:MOCK_GPS");
+                                Log.d("DEBUG", "startForegroundService: MOCK_GPS");
+                                log.debug("startForegroundService: MOCK_GPS");
                             } else {
                                 startService(mockLocServiceIntent);
-                                Log.d("DEBUG", "startService:MOCK_GPS");
+                                Log.d("DEBUG", "startService: MOCK_GPS");
+                                log.debug("startService: MOCK_GPS");
                             }
                             isMockServStart = true;
                             Snackbar.make(view, "位置模拟已开启", Snackbar.LENGTH_LONG)
                                     .setAction("Action", null).show();
-                            fab.setVisibility(View.INVISIBLE);
-                            fabStop.setVisibility(View.VISIBLE);
+                            //fab.setVisibility(View.INVISIBLE);
+                            fab.hide();
+                            //fabStop.setVisibility(View.VISIBLE);
+                            fabStop.show();
                             //track
                             grouploc.check(R.id.trackloc);
                         } else {
                             Snackbar.make(view, "位置模拟已在运行", Snackbar.LENGTH_LONG)
                                     .setAction("Action", null).show();
-                            fab.setVisibility(View.INVISIBLE);
-                            fabStop.setVisibility(View.VISIBLE);
+                            //fab.setVisibility(View.INVISIBLE);
+                            fab.hide();
+                            //fabStop.setVisibility(View.VISIBLE);
+                            fabStop.show();
                             isMockServStart = true;
                         }
                     }
@@ -644,8 +665,10 @@ public class MainActivity extends AppCompatActivity
                             .setAction("Action", null).show();
                     //service finish
                     isMockServStart = false;
-                    fab.setVisibility(View.VISIBLE);
-                    fabStop.setVisibility(View.INVISIBLE);
+                    //fab.setVisibility(View.VISIBLE);
+                    fab.show();
+                    //fabStop.setVisibility(View.INVISIBLE);
+                    fabStop.hide();
                     //重新定位
                     mLocClient.stop();
                     mLocClient.start();
@@ -688,8 +711,10 @@ public class MainActivity extends AppCompatActivity
 
                 if (!insertHistorySearchTable(searchHistoryDB, SearchDBHelper.TABLE_NAME, contentValues)) {
                     Log.e("DATABASE", "insertHistorySearchTable[SearchHistory] error");
+                    log.error("DATABASE: insertHistorySearchTable[SearchHistory] error");
                 } else {
                     Log.d("DATABASE", "insertHistorySearchTable[SearchHistory] success");
+                    log.debug("DATABASE: insertHistorySearchTable[SearchHistory] success");
                 }
 
                 mlinearLayout.setVisibility(View.INVISIBLE);
@@ -736,8 +761,10 @@ public class MainActivity extends AppCompatActivity
                     contentValues.put("TimeStamp", System.currentTimeMillis() / 1000);
                     if (!insertHistorySearchTable(searchHistoryDB, SearchDBHelper.TABLE_NAME, contentValues)) {
                         Log.e("DATABASE", "insertHistorySearchTable[SearchHistory] error");
+                        log.error("DATABASE: insertHistorySearchTable[SearchHistory] error");
                     } else {
                         Log.d("DATABASE", "insertHistorySearchTable[SearchHistory] success");
+                        log.debug("DATABASE: insertHistorySearchTable[SearchHistory] success");
                     }
                 }
                 //如果仅仅是搜索
@@ -764,18 +791,23 @@ public class MainActivity extends AppCompatActivity
                         contentValues.put("TimeStamp", System.currentTimeMillis() / 1000);
                         if (!insertHistorySearchTable(searchHistoryDB, SearchDBHelper.TABLE_NAME, contentValues)) {
                             Log.e("DATABASE", "insertHistorySearchTable[SearchHistory] error");
+                            log.error("DATABASE: insertHistorySearchTable[SearchHistory] error");
                         } else {
                             Log.d("DATABASE", "insertHistorySearchTable[SearchHistory] success");
+                            log.debug("DATABASE: insertHistorySearchTable[SearchHistory] success");
                         }
 
                     } catch (Exception e) {
                         DisplayToast("搜索失败，请检查网络连接");
+                        Log.d("HTTP", "搜索失败，请检查网络连接");
+                        log.debug("搜索失败，请检查网络连接");
                         e.printStackTrace();
                     }
                 }
                 //其他情况
                 else {
-
+                    Log.d("HTTP", "illegal parameter");
+                    log.debug("搜索失败，参数非法");
                 }
 
 
@@ -811,6 +843,7 @@ public class MainActivity extends AppCompatActivity
 
                                         } catch (Exception e) {
                                             Log.e("DATABASE", "delete error");
+                                            log.error("DATABASE: delete error");
                                             DisplayToast("DELETE ERROR[UNKNOWN]");
                                             e.printStackTrace();
                                         }
@@ -843,6 +876,8 @@ public class MainActivity extends AppCompatActivity
             public void onGetPoiResult(PoiResult poiResult) {
                 if (poiResult == null || poiResult.error == SearchResult.ERRORNO.RESULT_NOT_FOUND) {// 没有找到检索结果
                     DisplayToast("没有找到检索结果");
+                    Log.d("BDLOC", "没有找到检索结果");
+                    log.debug("BDLOC: 没有找到检索结果");
                     return;
                 }
                 if (poiResult.error == SearchResult.ERRORNO.NO_ERROR) {// 检索结果正常返回
@@ -890,6 +925,11 @@ public class MainActivity extends AppCompatActivity
 //                Log.d("DETAIL",poiDetailResult.address);
 //                Log.d("DETAIL",poiDetailResult.name);
 //                Log.d("DETAIL",poiDetailResult.tag);
+            }
+
+            @Override
+            public void onGetPoiDetailResult(PoiDetailSearchResult poiDetailSearchResult) {
+
             }
 
             @Override
@@ -1004,6 +1044,7 @@ public class MainActivity extends AppCompatActivity
             sqLiteDatabase.insert(tableName, null, contentValues);
         } catch (Exception e) {
             Log.e("DATABASE", "insert error");
+            log.error("DATABASE: insert error");
             insertRet = false;
             e.printStackTrace();
         }
@@ -1020,6 +1061,7 @@ public class MainActivity extends AppCompatActivity
             sqLiteDatabase.insert(tableName, null, contentValues);
         } catch (Exception e) {
             Log.e("DATABASE", "insert error");
+            log.error("DATABASE: insert error");
             insertRet = false;
             e.printStackTrace();
         }
@@ -1061,7 +1103,7 @@ public class MainActivity extends AppCompatActivity
 
         new AlertDialog.Builder(this)
                 .setTitle("启用位置模拟")//这里是表头的内容
-                .setMessage("请在开发者选项->选择模拟位置信息应用中进行设置")//这里是中间显示的具体信息
+                .setMessage("请在\"开发者选项→选择模拟位置信息应用\"中进行设置")//这里是中间显示的具体信息
                 .setPositiveButton("设置",//这个string是设置左边按钮的文字
                         new DialogInterface.OnClickListener() {
                             @Override
@@ -1071,6 +1113,34 @@ public class MainActivity extends AppCompatActivity
                                     startActivity(intent);
                                 } catch (Exception e) {
                                     DisplayToast("无法跳转到开发者选项,请先确保您的设备已处于开发者模式");
+                                    e.printStackTrace();
+                                }
+                            }
+                        })//setPositiveButton里面的onClick执行的是左边按钮
+                .setNegativeButton("取消",//这个string是设置右边按钮的文字
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })//setNegativeButton里面的onClick执行的是右边的按钮的操作
+                .show();
+    }
+
+
+    //提醒开启悬浮窗的弹框
+    private void setFloatWindowDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("启用悬浮窗")//这里是表头的内容
+                .setMessage("为了模拟定位的稳定性，建议开启\"显示悬浮窗\"选项")//这里是中间显示的具体信息
+                .setPositiveButton("设置",//这个string是设置左边按钮的文字
+                        new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                try {
+                                    Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:" + getPackageName()));
+                                    startActivity(intent);
+                                } catch (Exception e) {
+                                    DisplayToast("无法跳转到设置界面，请在权限管理中开启该应用的悬浮窗");
                                     e.printStackTrace();
                                 }
                             }
@@ -1222,6 +1292,7 @@ public class MainActivity extends AppCompatActivity
     //更新地图状态显示面板
     private void updateMapState() {
         Log.d("DEBUG", "updateMapState");
+        log.debug("DEBUG: updateMapState");
         if (currentPt != null) {
             MarkerOptions ooA = new MarkerOptions().position(currentPt).icon(bdA);
             mBaiduMap.clear();
@@ -1286,6 +1357,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onPause() {
         Log.d("PROGRESS", "onPause");
+        log.debug("PROGRESS: onPause");
         mMapView.onPause();
         super.onPause();
     }
@@ -1293,6 +1365,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         Log.d("PROGRESS", "onPause");
+        log.debug("PROGRESS: onPause");
         mMapView.onResume();
         super.onResume();
         //为系统的方向传感器注册监听器
@@ -1303,6 +1376,7 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onStop() {
         Log.d("PROGRESS", "onStop");
+        log.debug("PROGRESS: onStop");
         //取消注册传感器监听
         mSensorManager.unregisterListener(this);
         super.onStop();
@@ -1359,9 +1433,9 @@ public class MainActivity extends AppCompatActivity
                 permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
             }
             // 读取电话状态权限
-            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
-                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
-            }
+//            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
+//                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
+//            }
 
             if (permissions.size() > 0) {
                 requestPermissions(permissions.toArray(new String[permissions.size()]), SDK_PERMISSION_REQUEST);
@@ -1477,14 +1551,18 @@ public class MainActivity extends AppCompatActivity
                     contentValues.put("TimeStamp", System.currentTimeMillis() / 1000);
                     if (!insertHistorySearchTable(searchHistoryDB, SearchDBHelper.TABLE_NAME, contentValues)) {
                         Log.e("DATABASE", "insertHistorySearchTable[SearchHistory] error");
+                        log.error("DATABASE: insertHistorySearchTable[SearchHistory] error");
                     } else {
                         Log.d("DATABASE", "insertHistorySearchTable[SearchHistory] success");
+                        log.debug("DATABASE: insertHistorySearchTable[SearchHistory] success");
                     }
 
                     mBaiduMap.clear();
                     mlinearLayout.setVisibility(View.INVISIBLE);
                 } catch (Exception e) {
                     DisplayToast("搜索失败，请检查网络连接");
+                    Log.d("HTTP", "搜索失败，请检查网络连接");
+                    log.debug("HTTP: 搜索失败，请检查网络连接");
                     e.printStackTrace();
                 }
                 //
@@ -1513,6 +1591,8 @@ public class MainActivity extends AppCompatActivity
 //                                .pageNum(0));
                     } catch (Exception e) {
                         DisplayToast("搜索失败，请检查网络连接");
+                        Log.d("HTTP", "搜索失败，请检查网络连接");
+                        log.debug("HTTP: 搜索失败，请检查网络连接");
                         e.printStackTrace();
                     }
                     //
@@ -1588,9 +1668,11 @@ public class MainActivity extends AppCompatActivity
             Intent intent = new Intent(Settings.ACTION_SETTINGS);
             startActivity(intent);
         }
-//        else if (id == R.id.nav_share) {
-//
-//        }
+        else if (id == R.id.nav_bug_report) {
+            //选择日志文件并上传
+            DisplayToast("代码没写完");
+
+        }
         else if (id == R.id.nav_send) {
             Intent i = new Intent(Intent.ACTION_SEND);
             // i.setType("text/plain"); //模拟器请使用这行
@@ -1617,9 +1699,10 @@ public class MainActivity extends AppCompatActivity
         final String mcode = getResources().getString(R.string.safecode);
         final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
         //判断bd09坐标是否在国内
-        String mapApiUrl = "http://api.map.baidu.com/geoconv/v1/?coords=" + longitude + "," + latitude +
+        String mapApiUrl = "https://api.map.baidu.com/geoconv/v1/?coords=" + longitude + "," + latitude +
                 "&from=5&to=3&ak=" + ak + "&mcode=" + mcode;
-//        Log.d("HTTP", mapApiUrl);
+        Log.d("HTTP", mapApiUrl);
+        log.debug("HTTP: " + mapApiUrl);
         //bd09坐标转gcj02
         StringRequest stringRequest = new StringRequest(mapApiUrl,
                 new Response.Listener<String>() {
@@ -1630,6 +1713,7 @@ public class MainActivity extends AppCompatActivity
                             //如果api接口转换成功
                             if (Integer.valueOf(getRetJson.getString("status")) == 0) {
                                 Log.d("HTTP", "call api[bd09_to_gcj02] success");
+                                log.debug("HTTP: call api[bd09_to_gcj02] success");
                                 JSONArray coordinateArr = getRetJson.getJSONArray("result");
                                 JSONObject coordinate = coordinateArr.getJSONObject(0);
                                 String gcj02Longitude = coordinate.getString("x");
@@ -1640,6 +1724,9 @@ public class MainActivity extends AppCompatActivity
 
                                 Log.d("DEBUG", "gcj02Longitude is " + gcj02Longitude);
                                 Log.d("DEBUG", "gcj02Latitude is " + gcj02Latitude);
+
+                                log.debug("bd09Longitude is " + longitude + ", " + "bd09Latitude is " + latitude);
+                                log.debug("gcj02Longitude is " + gcj02Longitude + ", " + "gcj02Latitude is " + gcj02Latitude);
 
                                 BigDecimal bigDecimalGcj02Longitude = new BigDecimal(Double.valueOf(gcj02Longitude));
                                 BigDecimal bigDecimalGcj02Latitude = new BigDecimal(Double.valueOf(gcj02Latitude));
@@ -1658,12 +1745,16 @@ public class MainActivity extends AppCompatActivity
                                 Log.d("DEBUG", "bd09LongitudeDouble is " + bd09LongitudeDouble);
                                 Log.d("DEBUG", "bd09LatitudeDouble is " + bd09LatitudeDouble);
 
+                                log.debug("gcj02LongitudeDouble is " + gcj02LongitudeDouble + ", " + "gcj02LatitudeDouble is " + gcj02LatitudeDouble);
+                                log.debug("bd09LongitudeDouble is " + bd09LongitudeDouble + ", " + "bd09LatitudeDouble is " + bd09LatitudeDouble);
+
 
                                 //如果bd09转gcj02 结果误差很小  认为该坐标在国外
                                 if ((Math.abs(gcj02LongitudeDouble - bd09LongitudeDouble)) <= error && (Math.abs(gcj02LatitudeDouble - bd09LatitudeDouble)) <= error) {
                                     //不进行坐标转换
                                     latLngInfo = longitude + "&" + latitude;
                                     Log.d("DEBUG", "OUT OF CHN, NO NEED TO TRANSFORM COORDINATE");
+                                    log.debug("OUT OF CHN, NO NEED TO TRANSFORM COORDINATE");
 //                                    DisplayToast("OUT OF CHN, NO NEED TO TRANSFORM COORDINATE");
                                 } else {
                                     //离线转换坐标系
@@ -1671,6 +1762,7 @@ public class MainActivity extends AppCompatActivity
                                     double latLng[] = Utils.gcj02towgs84(Double.valueOf(gcj02Longitude), Double.valueOf(gcj02Latitude));
                                     latLngInfo = latLng[0] + "&" + latLng[1];
                                     Log.d("DEBUG", "IN CHN, NEED TO TRANSFORM COORDINATE");
+                                    log.debug("IN CHN, NEED TO TRANSFORM COORDINATE");
 //                                    DisplayToast("IN CHN, NEED TO TRANSFORM COORDINATE");
                                 }
                             }
@@ -1680,16 +1772,19 @@ public class MainActivity extends AppCompatActivity
                                 double latLng[] = Utils.bd2wgs(Double.valueOf(longitude), Double.valueOf(latitude));
                                 latLngInfo = latLng[0] + "&" + latLng[1];
                                 Log.d("DEBUG", "IN CHN, NEED TO TRANSFORM COORDINATE");
+                                log.debug("IN CHN, NEED TO TRANSFORM COORDINATE");
 //                                DisplayToast("BD Map Api Return not Zero, ASSUME IN CHN, NEED TO TRANSFORM COORDINATE");
                             }
 
                         } catch (JSONException e) {
                             Log.e("JSON", "resolve json error");
+                            log.error("JSON: resolve json error");
                             e.printStackTrace();
                             //离线转换坐标系
                             double latLng[] = Utils.bd2wgs(Double.valueOf(longitude), Double.valueOf(latitude));
                             latLngInfo = latLng[0] + "&" + latLng[1];
                             Log.d("DEBUG", "IN CHN, NEED TO TRANSFORM COORDINATE");
+                            log.debug("IN CHN, NEED TO TRANSFORM COORDINATE");
 //                            DisplayToast("Resolve JSON Error, ASSUME IN CHN, NEED TO TRANSFORM COORDINATE");
                         }
                     }
@@ -1699,10 +1794,12 @@ public class MainActivity extends AppCompatActivity
             public void onErrorResponse(VolleyError error) {
                 //http 请求失败
                 Log.e("HTTP", "HTTP GET FAILED");
+                log.error("HTTP: HTTP GET FAILED");
                 //离线转换坐标系
                 double latLng[] = Utils.bd2wgs(Double.valueOf(longitude), Double.valueOf(latitude));
                 latLngInfo = latLng[0] + "&" + latLng[1];
                 Log.d("DEBUG", "IN CHN, NEED TO TRANSFORM COORDINATE");
+                log.debug("IN CHN, NEED TO TRANSFORM COORDINATE");
 //                DisplayToast("HTTP Get Failed, ASSUME IN CHN, NEED TO TRANSFORM COORDINATE");
             }
         });
@@ -1723,7 +1820,7 @@ public class MainActivity extends AppCompatActivity
         final String mcode = getResources().getString(R.string.safecode);
         final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
         //bd09坐标的位置信息
-        String mapApiUrl = "http://api.map.baidu.com/geocoder/v2/?location=" + currentPt.latitude + "," + currentPt.longitude + "&output=json&pois=1&ak=" + ak + "&mcode=" + mcode;
+        String mapApiUrl = "https://api.map.baidu.com/geocoder/v2/?location=" + currentPt.latitude + "," + currentPt.longitude + "&output=json&pois=1&ak=" + ak + "&mcode=" + mcode;
         StringRequest stringRequest = new StringRequest(mapApiUrl,
                 new Response.Listener<String>() {
                     @Override
@@ -1733,10 +1830,12 @@ public class MainActivity extends AppCompatActivity
                             //位置获取成功
                             if (Integer.valueOf(getRetJson.getString("status")) == 0) {
                                 Log.d("HTTP", "call api[get_poisition_info] success");
+                                log.debug("HTTP: call api[get_poisition_info] success");
                                 JSONObject posInfoJson = getRetJson.getJSONObject("result");
                                 String formatted_address = posInfoJson.getString("formatted_address");
 //                                DisplayToast(tmp);
-                                Log.d("DEBUG", formatted_address);
+                                Log.d("ADDR", formatted_address);
+                                log.debug(formatted_address);
 
                                 //插表参数
                                 ContentValues contentValues = new ContentValues();
@@ -1750,8 +1849,10 @@ public class MainActivity extends AppCompatActivity
 
                                 if (!insertHistoryLocTable(locHistoryDB, HistoryDBHelper.TABLE_NAME, contentValues)) {
                                     Log.e("DATABASE", "insertHistoryLocTable[HistoryLocation] error");
+                                    log.error("DATABASE: insertHistoryLocTable[HistoryLocation] error");
                                 } else {
                                     Log.d("DATABASE", "insertHistoryLocTable[HistoryLocation] success");
+                                    log.debug("DATABASE: insertHistoryLocTable[HistoryLocation] success");
                                 }
                             }
                             //位置获取失败
@@ -1768,13 +1869,16 @@ public class MainActivity extends AppCompatActivity
 
                                 if (!insertHistoryLocTable(locHistoryDB, HistoryDBHelper.TABLE_NAME, contentValues)) {
                                     Log.e("DATABASE", "insertHistoryLocTable[HistoryLocation] error");
+                                    log.error("DATABASE: insertHistoryLocTable[HistoryLocation] error");
                                 } else {
                                     Log.d("DATABASE", "insertHistoryLocTable[HistoryLocation] success");
+                                    log.debug("DATABASE: insertHistoryLocTable[HistoryLocation] success");
                                 }
                             }
 
                         } catch (JSONException e) {
                             Log.e("JSON", "resolve json error");
+                            log.error("JSON: resolve json error");
                             //插表参数
                             ContentValues contentValues = new ContentValues();
                             contentValues.put("Location", "NULL");
@@ -1787,8 +1891,10 @@ public class MainActivity extends AppCompatActivity
 
                             if (!insertHistoryLocTable(locHistoryDB, HistoryDBHelper.TABLE_NAME, contentValues)) {
                                 Log.e("DATABASE", "insertHistoryLocTable[HistoryLocation] error");
+                                log.error("DATABASE: insertHistoryLocTable[HistoryLocation] error");
                             } else {
                                 Log.d("DATABASE", "insertHistoryLocTable[HistoryLocation] success");
+                                log.debug("DATABASE: insertHistoryLocTable[HistoryLocation] success");
                             }
                             e.printStackTrace();
                         }
@@ -1799,6 +1905,7 @@ public class MainActivity extends AppCompatActivity
             public void onErrorResponse(VolleyError error) {
                 //http 请求失败
                 Log.e("HTTP", "HTTP GET FAILED");
+                log.error("HTTP: HTTP GET FAILED");
                 //插表参数
                 ContentValues contentValues = new ContentValues();
                 contentValues.put("Location", "NULL");
@@ -1811,8 +1918,10 @@ public class MainActivity extends AppCompatActivity
 
                 if (!insertHistoryLocTable(locHistoryDB, HistoryDBHelper.TABLE_NAME, contentValues)) {
                     Log.e("DATABASE", "insertHistoryLocTable[HistoryLocation] error");
+                    log.error("DATABASE: insertHistoryLocTable[HistoryLocation] error");
                 } else {
                     Log.d("DATABASE", "insertHistoryLocTable[HistoryLocation] success");
+                    log.debug("DATABASE: insertHistoryLocTable[HistoryLocation] success");
                 }
             }
         });
@@ -1829,7 +1938,8 @@ public class MainActivity extends AppCompatActivity
             Bundle bundle = intent.getExtras();
             assert bundle != null;
             statusCode = bundle.getInt("statusCode");
-//            Log.d("DEBUG", statusCode + "");
+            Log.d("DEBUG", "BroadcastReceiver statusCode: " + statusCode + "");
+            log.debug("DEBUG: BroadcastReceiver statusCode: " + statusCode + "");
             if (statusCode == RunCode) {
                 isServiceRun = true;
             } else if (statusCode == StopCode) {
@@ -1854,6 +1964,7 @@ public class MainActivity extends AppCompatActivity
         } catch (Exception e) {
             ret = false;
             Log.e("UNKNOWN", "setHistoryLocation error");
+            log.error("UNKNOWN: setHistoryLocation error");
             e.printStackTrace();
         }
         return ret;

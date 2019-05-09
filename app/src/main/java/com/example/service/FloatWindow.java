@@ -60,7 +60,7 @@ public class FloatWindow implements View.OnTouchListener {
         mWindowParams.flags = WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE;
         mWindowParams.gravity = Gravity.START | Gravity.TOP;
         mWindowParams.width = WindowManager.LayoutParams.WRAP_CONTENT;
-        mWindowParams.height = 96;
+        mWindowParams.height = 108;
 //        mWindowParams.height = WindowManager.LayoutParams.WRAP_CONTENT;
         Log.d("FLOAT","initFloatWindow finish");
     }

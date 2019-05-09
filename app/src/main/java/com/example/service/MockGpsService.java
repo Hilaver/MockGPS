@@ -27,7 +27,10 @@ import android.view.Gravity;
 import android.widget.Toast;
 
 import com.baidu.mapapi.model.LatLng;
+import com.example.log4j.LogUtil;
 import com.example.mockgps.R;
+
+import org.apache.log4j.Logger;
 
 import java.util.UUID;
 
@@ -53,6 +56,8 @@ public class MockGpsService extends Service {
     public static final int RunCode=0x01;
     public static final int StopCode=0x02;
 
+    //log debug
+    private static Logger log = Logger.getLogger(MockGpsService.class);
 
     @Nullable
     @Override
@@ -63,7 +68,9 @@ public class MockGpsService extends Service {
     @SuppressLint("WrongConstant")
     @Override
     public void onCreate() {
+        LogUtil.configLog();
         Log.d(TAG, "onCreate");
+        log.debug(TAG+ ": onCreate");
         super.onCreate();
 
         locationManager=(LocationManager)this.getSystemService(Context.LOCATION_SERVICE);
@@ -72,8 +79,12 @@ public class MockGpsService extends Service {
         rmNetworkProvider();
 
         //add a new network location provider
-//        setGPSProvider();
         setNewNetworkProvider();
+
+
+//        rmGPSProvider();
+//        setGPSProvider();
+        //setGPSProvider();
 
         //thread
         handlerThread=new HandlerThread(getUUID(),-2);
@@ -84,6 +95,13 @@ public class MockGpsService extends Service {
                 try {
                     Thread.sleep(333);
                     if (!isStop){
+
+                        //remove default network location provider
+                        //rmNetworkProvider();
+
+                        //add a new network location provider
+                        //setNewNetworkProvider();
+
                         setNetworkLocation();
                         sendEmptyMessage(0);
                         //broadcast to MainActivity
@@ -94,7 +112,8 @@ public class MockGpsService extends Service {
                     }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
-                    Log.d(TAG, "setNetworkLocation error");
+                    Log.d(TAG, "handleMessage error");
+                    log.debug(TAG+ ": handleMessage error");
                     Thread.currentThread().interrupt();
                 }
             }
@@ -106,12 +125,14 @@ public class MockGpsService extends Service {
     public void onStart(Intent intent, int startId) {
         super.onStart(intent, startId);
         Log.d(TAG, "onStart");
+        log.debug(TAG+ ": onStart");
     }
 
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Log.d(TAG, "onStartCommand");
+        log.debug(TAG+ ": onStartCommand");
 //        DisplayToast("Mock Location Service Start");
         //
 
@@ -145,6 +166,7 @@ public class MockGpsService extends Service {
         //get location info from mainActivity
         latLngInfo=intent.getStringExtra("key");
         Log.d(TAG, "dataFromMain is "+latLngInfo);
+        log.debug(TAG+ ": dataFromMain is "+latLngInfo);
         //start to refresh location
         isStop=false;
 
@@ -165,6 +187,7 @@ public class MockGpsService extends Service {
     @Override
     public void onDestroy() {
         Log.d(TAG, "onDestroy");
+        log.debug(TAG+ ": onDestroy");
 //        Toast.makeText(this, "Service destroyed", Toast.LENGTH_SHORT).show();
 
 //        DisplayToast("Mock Loction Service finish");
@@ -178,6 +201,7 @@ public class MockGpsService extends Service {
         handlerThread.quit();
         rmNetworkProvider();
 
+        //rmGPSProvider();
         stopForeground(true);
 
         //broadcast to MainActivity
@@ -219,15 +243,20 @@ public class MockGpsService extends Service {
     //set network location
     private void setNetworkLocation() {
         //default location 30.5437233 104.0610342 成都长虹科技大厦
+        Log.d(TAG, "setNetworkLocation: "+latLngInfo);
+        log.debug(TAG+ ": setNetworkLocation: "+latLngInfo);
         String latLngStr[]=latLngInfo.split("&");
         LatLng latLng = new LatLng(Double.valueOf(latLngStr[1]), Double.valueOf(latLngStr[0]));
         String providerStr = LocationManager.NETWORK_PROVIDER;
+//        String providerStr2 = LocationManager.GPS_PROVIDER;
         try {
             locationManager.setTestProviderLocation(providerStr, generateLocation(latLng));
+//            locationManager.setTestProviderLocation(providerStr2, generateLocation(latLng));
             //for test
 //            locationManager.setTestProviderLocation(LocationManager.GPS_PROVIDER, generateLocation(latLng));
         } catch (Exception e) {
             Log.d(TAG, "setNetworkLocation error");
+            log.debug(TAG+ ": setNetworkLocation error");
             e.printStackTrace();
         }
     }
@@ -235,15 +264,23 @@ public class MockGpsService extends Service {
     //remove network provider
     private void rmNetworkProvider(){
         try {
-            String providerStr = LocationManager.NETWORK_PROVIDER;
-            if (locationManager.isProviderEnabled(providerStr)){
-                Log.d(TAG, "now remove NetworkProvider");
+            for(int i=0;i<3;i++){
+                String providerStr = LocationManager.NETWORK_PROVIDER;
+                if (locationManager.isProviderEnabled(providerStr)){
+                    Log.d(TAG, "now remove NetworkProvider: "+i);
+                    log.debug(TAG+ ": now remove NetworkProvider: "+i);
 //                locationManager.setTestProviderEnabled(providerStr,true);
-                locationManager.removeTestProvider(providerStr);
+                    locationManager.removeTestProvider(providerStr);
+                }else{
+                    Log.d(TAG, "NetworkProvider is not enabled: "+i);
+                    log.debug(TAG+ ": NetworkProvider is not enabled: "+i);
+                }
             }
+
         }catch (Exception e){
             e.printStackTrace();
             Log.d(TAG, "rmNetworkProvider error");
+            log.debug(TAG+ ": rmNetworkProvider error");
         }
     }
 
@@ -255,38 +292,57 @@ public class MockGpsService extends Service {
                     false, false, false, false,
                     false, 1, Criteria.ACCURACY_FINE);
             Log.d(TAG,"addTestProvider[network] success");
+            log.debug(TAG+": addTestProvider[network] success");
 //            locationManager.setTestProviderStatus("network", LocationProvider.AVAILABLE, null,
 //                    System.currentTimeMillis());
         }catch (SecurityException e){
             Log.d(TAG,"setNewNetworkProvider error");
+            log.debug(TAG+": setNewNetworkProvider error");
         }
         if (!locationManager.isProviderEnabled(providerStr)){
             Log.d(TAG, "now  setTestProviderEnabled[network]");
+            log.debug(TAG+ ": now  setTestProviderEnabled[network]");
             locationManager.setTestProviderEnabled(providerStr,true);
         }
     }
 
     // for test: set GPS provider
+    private void rmGPSProvider(){
+        try {
+            String providerStr = LocationManager.GPS_PROVIDER;
+            if (locationManager.isProviderEnabled(providerStr)){
+                Log.d(TAG, "now remove GPSProvider");
+//                locationManager.setTestProviderEnabled(providerStr,true);
+                locationManager.removeTestProvider(providerStr);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            Log.d(TAG, "rmGPSProvider error");
+        }
+    }
     private void setGPSProvider(){
         LocationProvider provider = locationManager.getProvider(LocationManager.GPS_PROVIDER);
-        if (provider != null) {
-            locationManager.addTestProvider(
-                    provider.getName()
-                    , provider.requiresNetwork()
-                    , provider.requiresSatellite()
-                    , provider.requiresCell()
-                    , provider.hasMonetaryCost()
-                    , provider.supportsAltitude()
-                    , provider.supportsSpeed()
-                    , provider.supportsBearing()
-                    , provider.getPowerRequirement()
-                    , provider.getAccuracy());
-        } else {
-            locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, true, false,
+//        if (provider != null) {
+//            locationManager.addTestProvider(
+//                    provider.getName()
+//                    , provider.requiresNetwork()
+//                    , provider.requiresSatellite()
+//                    , provider.requiresCell()
+//                    , provider.hasMonetaryCost()
+//                    , provider.supportsAltitude()
+//                    , provider.supportsSpeed()
+//                    , provider.supportsBearing()
+//                    , provider.getPowerRequirement()
+//                    , provider.getAccuracy());
+//        } else {
+            locationManager.addTestProvider(LocationManager.GPS_PROVIDER, false, true, true,
                     false, true, true, true, 0, 5);
-        }
+//        }
+//        if (!locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)){
+            locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+//        }
 
-        locationManager.setTestProviderEnabled(LocationManager.GPS_PROVIDER, true);
+
         //新
         locationManager.setTestProviderStatus(LocationManager.GPS_PROVIDER, LocationProvider.AVAILABLE, null,
                 System.currentTimeMillis());
