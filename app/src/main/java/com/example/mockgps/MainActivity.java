@@ -211,7 +211,12 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        LogUtil.configLog();
+        try{
+            LogUtil.configLog();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         //Logger log = Logger.getLogger(MainActivity.class);
         Log.d("PROGRESS", "onCreate");
         log.debug("PROGRESS: onCreate");
@@ -1429,9 +1434,12 @@ public class MainActivity extends AppCompatActivity
              * 读写权限和电话状态权限非必要权限(建议授予)只会申请一次，用户同意或者禁止，只会弹一次
              */
             // 读写权限
-            if (addPermission(permissions, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
+            if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             }
+//            if (addPermission(permissions, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+//                permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
+//            }
             // 读取电话状态权限
 //            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
 //                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
