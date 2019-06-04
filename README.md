@@ -6,7 +6,7 @@ Author：Nero
 
 __目前仅适用于百度地图和高德地图的SDK定位，腾讯系列无法使用__
 
-__安装包路径: app\release\MockGPS_v1.9.4.190219_beta.apk__
+__安装包路径: app\release\MockGPS_v1.9.5.190604_alpha.apk__
 
 需要开启 __开发者选项中的位置模拟__
 
@@ -19,6 +19,8 @@ __安装包路径: app\release\MockGPS_v1.9.4.190219_beta.apk__
 有问题或者bug的话，就发邮件吧 [565563269@qq.com]
 
 Version 1.9.5测试版
+  
+  下载地址：https://github.com/Hilaver/MockGPS/blob/master/app/release/MockGPS_v1.9.5.190604_alpha.apk
 
   1.开发环境换成了Android 9，增加一些Android 9的适配
   
