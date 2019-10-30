@@ -16,5 +16,7 @@
     <string name="manual_input">经纬度定位</string>
     <string name="author">Author: hilavergil@gmail.com</string>
     <string name="norecord">无历史纪录</string>
-    <string name="safecode">9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps</string>
+<!--    <string name="safecode">9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps</string>-->
+    <string name="safecode">6E:62:93:45:22:FD:4E:8C:B2:42:47:1D:EC:55:4E:55:2A:FF:A1:1A;com.example.mockgps</string>
+    <string name="ak">HSwbpNRRE7Ykvky1G4ustFX02QKBL7t8</string>
 </resources>

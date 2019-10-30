@@ -18,6 +18,16 @@ __安装包路径: app\release\MockGPS_v1.9.5.190604_alpha.apk__
 
 有问题或者bug的话，就发邮件吧 [565563269@qq.com]
 
+Version 1.9.6 beta版【branch：dev】
+  
+  签名apk的目录 ./app/release/MockGPS_v1.9.6.191111_beta.apk
+  
+  下载链接：https://github.com/Hilaver/MockGPS/raw/dev/app/release/MockGPS_v1.9.6.191114_beta.apk
+
+  1.增加了Android10的适配，新代码放到了dev分支，其他没什么大的改动了
+
+  2.哦对了，有朋友反应说开启/关闭按钮遮挡比例尺了，我把按钮往中间移动了一点
+
 Version 1.9.5测试版
   
   下载地址：https://github.com/Hilaver/MockGPS/blob/master/app/release/MockGPS_v1.9.5.190604_alpha.apk

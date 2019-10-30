@@ -1,9 +1,8 @@
 package com.example.mockgps;
 
 import android.Manifest;
-import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
-import android.app.PendingIntent;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.ContentValues;
 import android.content.Context;
@@ -27,26 +26,31 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
-import android.support.annotation.RequiresApi;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.view.MenuItemCompat;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.SearchView;
-import android.telephony.TelephonyManager;
+
+import androidx.annotation.RequiresApi;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.snackbar.Snackbar;
+
+import androidx.core.app.ActivityCompat;
+import androidx.core.view.MenuItemCompat;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.SearchView;
+
 import android.util.Log;
-import android.view.Display;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.support.design.widget.NavigationView;
-import android.support.v4.view.GravityCompat;
-import android.support.v4.widget.DrawerLayout;
-import android.support.v7.app.ActionBarDrawerToggle;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+
+import com.google.android.material.navigation.NavigationView;
+
+import androidx.core.view.GravityCompat;
+import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.appcompat.app.ActionBarDrawerToggle;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.AdapterView;
@@ -107,8 +111,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.File;
-import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -121,8 +123,6 @@ import static com.example.service.MockGpsService.RunCode;
 import static com.example.service.MockGpsService.StopCode;
 
 import org.apache.log4j.Logger;
-
-import com.example.log4j.*;
 
 public class MainActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener, SensorEventListener {
@@ -207,24 +207,26 @@ public class MainActivity extends AppCompatActivity
     private static Logger log = Logger.getLogger(MainActivity.class);
     ////////
 
+
     @RequiresApi(api = Build.VERSION_CODES.M)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
-        try{
+        getPersimmions();
+
+        try {
             LogUtil.configLog();
-        }catch (Exception e){
+        } catch (Exception e) {
+            Log.e("Log", "LogUtil config error");
             e.printStackTrace();
         }
-
-        //Logger log = Logger.getLogger(MainActivity.class);
-        Log.d("PROGRESS", "onCreate");
-        log.debug("PROGRESS: onCreate");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        Log.d("PROGRESS", "onCreate");
+        log.debug("PROGRESS: onCreate");
 
         //sqlite
         try {
@@ -268,9 +270,6 @@ public class MainActivity extends AppCompatActivity
             e.printStackTrace();
         }
 
-
-        //获取权限
-        getPersimmions();
         /////
         mSensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);//获取传感器管理服务
         mCurrentMode = MyLocationConfiguration.LocationMode.NORMAL;
@@ -1161,6 +1160,7 @@ public class MainActivity extends AppCompatActivity
 
     //模拟位置权限是否开启
     public boolean isAllowMockLocation() {
+//        return true;
         boolean canMockPosition = false;
         if (Build.VERSION.SDK_INT <= 22) {//6.0以下
             canMockPosition = Settings.Secure.getInt(this.getContentResolver(), Settings.Secure.ALLOW_MOCK_LOCATION, 0) != 0;
@@ -1169,32 +1169,58 @@ public class MainActivity extends AppCompatActivity
                 LocationManager locationManager = (LocationManager) this.getSystemService(Context.LOCATION_SERVICE);//获得LocationManager引用
                 String providerStr = LocationManager.GPS_PROVIDER;
                 LocationProvider provider = locationManager.getProvider(providerStr);
-                if (provider != null) {
-                    locationManager.addTestProvider(
-                            provider.getName()
-                            , provider.requiresNetwork()
-                            , provider.requiresSatellite()
-                            , provider.requiresCell()
-                            , provider.hasMonetaryCost()
-                            , provider.supportsAltitude()
-                            , provider.supportsSpeed()
-                            , provider.supportsBearing()
-                            , provider.getPowerRequirement()
-                            , provider.getAccuracy());
-                } else {
-                    locationManager.addTestProvider(
-                            providerStr
-                            , true, true, false, false, true, true, true
-                            , Criteria.POWER_HIGH, Criteria.ACCURACY_FINE);
+                // 为防止在已有testProvider的情况下导致addTestProvider抛出异常，先移除testProvider
+                try {
+                    locationManager.removeTestProvider(providerStr);
+                    Log.d("PERMISSION", "try to move test provider");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Log.e("PERMISSION", "try to move test provider");
                 }
-                locationManager.setTestProviderEnabled(providerStr, true);
-                locationManager.setTestProviderStatus(providerStr, LocationProvider.AVAILABLE, null, System.currentTimeMillis());
+                if (provider != null) {
+                    try {
+                        locationManager.addTestProvider(
+                                provider.getName()
+                                , provider.requiresNetwork()
+                                , provider.requiresSatellite()
+                                , provider.requiresCell()
+                                , provider.hasMonetaryCost()
+                                , provider.supportsAltitude()
+                                , provider.supportsSpeed()
+                                , provider.supportsBearing()
+                                , provider.getPowerRequirement()
+                                , provider.getAccuracy());
+                        canMockPosition = true;
+                    } catch (Exception e) {
+                        Log.e("FUCK", "add origin gps test provider error");
+                        canMockPosition = false;
+                        e.printStackTrace();
+                    }
+                } else {
+                    try {
+                        locationManager.addTestProvider(
+                                providerStr
+                                , true, true, false, false, true, true, true
+                                , Criteria.POWER_HIGH, Criteria.ACCURACY_FINE);
+                        canMockPosition = true;
+                    } catch (Exception e) {
+                        Log.e("FUCK", "add gps test provider error");
+                        canMockPosition = false;
+                        e.printStackTrace();
+                    }
+                }
+
                 // 模拟位置可用
-                canMockPosition = true;
-                locationManager.setTestProviderEnabled(providerStr, false);
-                locationManager.removeTestProvider(providerStr);
+                if (canMockPosition) {
+                    locationManager.setTestProviderEnabled(providerStr, true);
+                    locationManager.setTestProviderStatus(providerStr, LocationProvider.AVAILABLE, null, System.currentTimeMillis());
+                    //remove test provider
+                    locationManager.setTestProviderEnabled(providerStr, false);
+                    locationManager.removeTestProvider(providerStr);
+                }
             } catch (SecurityException e) {
                 canMockPosition = false;
+                e.printStackTrace();
             }
         }
         return canMockPosition;
@@ -1390,6 +1416,10 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onDestroy() {
         Log.d("PROGRESS", "onDestroy");
+        if (isMockServStart) {
+            Intent mockLocServiceIntent = new Intent(MainActivity.this, MockGpsService.class);
+            stopService(mockLocServiceIntent);
+        }
         // 退出时销毁定位
         mLocClient.stop();
         // 关闭定位图层
@@ -1434,12 +1464,18 @@ public class MainActivity extends AppCompatActivity
              * 读写权限和电话状态权限非必要权限(建议授予)只会申请一次，用户同意或者禁止，只会弹一次
              */
             // 读写权限
+            if (checkSelfPermission(Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                permissions.add(Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+            if (addPermission(permissions, Manifest.permission.READ_EXTERNAL_STORAGE)) {
+                permissionInfo += "Manifest.permission.READ_EXTERNAL_STORAGE Deny \n";
+            }
             if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 permissions.add(Manifest.permission.WRITE_EXTERNAL_STORAGE);
             }
-//            if (addPermission(permissions, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-//                permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
-//            }
+            if (addPermission(permissions, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                permissionInfo += "Manifest.permission.WRITE_EXTERNAL_STORAGE Deny \n";
+            }
             // 读取电话状态权限
 //            if (addPermission(permissions, Manifest.permission.READ_PHONE_STATE)) {
 //                permissionInfo += "Manifest.permission.READ_PHONE_STATE Deny \n";
@@ -1675,13 +1711,11 @@ public class MainActivity extends AppCompatActivity
         } else if (id == R.id.nav_manage) {
             Intent intent = new Intent(Settings.ACTION_SETTINGS);
             startActivity(intent);
-        }
-        else if (id == R.id.nav_bug_report) {
+        } else if (id == R.id.nav_bug_report) {
             //选择日志文件并上传
             DisplayToast("代码没写完");
 
-        }
-        else if (id == R.id.nav_send) {
+        } else if (id == R.id.nav_send) {
             Intent i = new Intent(Intent.ACTION_SEND);
             // i.setType("text/plain"); //模拟器请使用这行
             i.setType("message/rfc822"); // 真机上使用这行
@@ -1703,9 +1737,8 @@ public class MainActivity extends AppCompatActivity
         //参数坐标系：bd09
 //        boolean isInCHN=false;
         final double error = 0.00000001;
-//        final String mcode = "9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps";
         final String mcode = getResources().getString(R.string.safecode);
-        final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
+        final String ak = getResources().getString(R.string.ak);
         //判断bd09坐标是否在国内
         String mapApiUrl = "https://api.map.baidu.com/geoconv/v1/?coords=" + longitude + "," + latitude +
                 "&from=5&to=3&ak=" + ak + "&mcode=" + mcode;
@@ -1824,11 +1857,13 @@ public class MainActivity extends AppCompatActivity
     //根据经纬度更新位置信息 并插表
     private void updatePositionInfo() {
         //参数坐标系：bd09
-//        final String mcode = "9D:8B:73:A5:DF:2A:36:3F:84:2D:38:55:BD:0A:57:C5:8F:50:44:69;com.example.mockgps";
         final String mcode = getResources().getString(R.string.safecode);
-        final String ak = "iDVeohokAwgulI0Yga4voEoqDaGqxL7y";
+        final String ak = getResources().getString(R.string.ak);
+        final String mapType = "bd09ll";
         //bd09坐标的位置信息
-        String mapApiUrl = "https://api.map.baidu.com/geocoder/v2/?location=" + currentPt.latitude + "," + currentPt.longitude + "&output=json&pois=1&ak=" + ak + "&mcode=" + mcode;
+//        String mapApiUrl = "https://api.map.baidu.com/geocoder/v2/?location=" + currentPt.latitude + "," + currentPt.longitude + "&output=json&pois=1&ak=" + ak + "&mcode=" + mcode;
+        String mapApiUrl = "https://api.map.baidu.com/reverse_geocoding/v3/?ak=" + ak + "&output=json&coordtype=" + mapType + "&location=" + currentPt.latitude + "," + currentPt.longitude + "&mcode=" + mcode;
+        Log.d("MAPAPI", mapApiUrl);
         StringRequest stringRequest = new StringRequest(mapApiUrl,
                 new Response.Listener<String>() {
                     @Override

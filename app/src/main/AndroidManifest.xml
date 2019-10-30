@@ -3,6 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.mockgps">
 
+    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION">
+    </uses-permission>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" >
     </uses-permission>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" >
@@ -16,6 +18,8 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" >
     </uses-permission>
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" >
+    </uses-permission>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" >
     </uses-permission>
     <uses-permission android:name="android.permission.INTERNET" >
     </uses-permission>
@@ -40,6 +44,7 @@
 
     <application
         android:name="com.example.mockgps.LocationApplication"
+        android:requestLegacyExternalStorage="true"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -57,7 +62,7 @@
 
         <meta-data
             android:name="com.baidu.lbsapi.API_KEY"
-            android:value="iDVeohokAwgulI0Yga4voEoqDaGqxL7y" />
+            android:value="HSwbpNRRE7Ykvky1G4ustFX02QKBL7t8" />
         <activity
             android:name="com.example.mockgps.StartActivity"
             android:label="@string/app_name"

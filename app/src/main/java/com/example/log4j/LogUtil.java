@@ -68,6 +68,7 @@ public class LogUtil {
 
         /** 设置Log等级，生产环境下调用setLogToProduce()，发布后调用setLogToRelease() **/
         setLogToProduce(logConfig);
+//        setLogToRelease(logConfig);
 
         logConfig.setFileName(LOG_FILE_PATH);
 

@@ -19,9 +19,9 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Message;
 import android.os.SystemClock;
-import android.support.annotation.Nullable;
-import android.support.annotation.RequiresApi;
-import android.support.v4.app.NotificationCompat;
+import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
+import androidx.core.app.NotificationCompat;
 import android.util.Log;
 import android.view.Gravity;
 import android.widget.Toast;
@@ -296,19 +296,16 @@ public class MockGpsService extends Service {
     //remove network provider
     private void rmNetworkTestProvider() {
         try {
-            for (int i = 0; i < 3; i++) {
-                String providerStr = LocationManager.NETWORK_PROVIDER;
-                if (locationManager.isProviderEnabled(providerStr)) {
-                    Log.d(TAG, "now remove NetworkProvider: try_" + i);
-                    log.debug(TAG + ": now remove NetworkProvider: try_" + i);
+            String providerStr = LocationManager.NETWORK_PROVIDER;
+            if (locationManager.isProviderEnabled(providerStr)) {
+                Log.d(TAG, "now remove NetworkProvider");
+                log.debug(TAG + ": now remove NetworkProvider");
 //                locationManager.setTestProviderEnabled(providerStr,true);
-                    locationManager.removeTestProvider(providerStr);
-                } else {
-                    Log.d(TAG, "NetworkProvider is not enabled: try_" + i);
-                    log.debug(TAG + ": NetworkProvider is not enabled: try_" + i);
-                }
+                locationManager.removeTestProvider(providerStr);
+            } else {
+                Log.d(TAG, "NetworkProvider is not enabled");
+                log.debug(TAG + ": NetworkProvider is not enabled");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             Log.d(TAG, "rmNetworkProvider error");
@@ -347,19 +344,16 @@ public class MockGpsService extends Service {
     // for test: set GPS provider
     private void rmGPSTestProvider() {
         try {
-            for (int i = 0; i < 3; i++) {
-                String providerStr = LocationManager.GPS_PROVIDER;
-                if (locationManager.isProviderEnabled(providerStr)) {
-                    Log.d(TAG, "now remove GPSProvider: try_" + i);
-                    log.debug(TAG + ": now remove GPSProvider: try_" + i);
+            String providerStr = LocationManager.GPS_PROVIDER;
+            if (locationManager.isProviderEnabled(providerStr)) {
+                Log.d(TAG, "now remove GPSProvider");
+                log.debug(TAG + ": now remove GPSProvider");
 //                locationManager.setTestProviderEnabled(providerStr,true);
-                    locationManager.removeTestProvider(providerStr);
-                } else {
-                    Log.d(TAG, "GPSProvider is not enabled: try_" + i);
-                    log.debug(TAG + ": GPSProvider is not enabled: try_" + i);
-                }
+                locationManager.removeTestProvider(providerStr);
+            } else {
+                Log.d(TAG, "GPSProvider is not enabled");
+                log.debug(TAG + ": GPSProvider is not enabled");
             }
-
         } catch (Exception e) {
             e.printStackTrace();
             Log.d(TAG, "rmGPSProvider error");

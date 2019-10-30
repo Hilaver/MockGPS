@@ -1,5 +1,7 @@
 package com.example.log4j;
 
+import android.util.Log;
+
 import java.io.IOException;
 
 import org.apache.log4j.Layout;
@@ -108,6 +110,7 @@ public class LogConfig {
 		Layout fileLayout = new PatternLayout(getFilePattern());
 		RollingFileAppender rollingFileAppender;
 		try {
+			//here
 			rollingFileAppender = new RollingFileAppender(fileLayout, getFileName());
 		} catch (IOException e) {
 			throw new RuntimeException("Exception configuring log system", e);
