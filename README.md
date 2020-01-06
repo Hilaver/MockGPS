@@ -18,7 +18,8 @@ __安装包路径: app\release\MockGPS_v1.9.5.190604_alpha.apk__
 
 有问题或者bug的话，就发邮件吧 [565563269@qq.com]
 
-Version 1.9.6 beta版【branch：dev】
+
+__Version 1.9.6 beta版__【branch：dev】
   
   签名apk的目录 ./app/release/MockGPS_v1.9.6.191114_beta.apk
   
@@ -27,6 +28,7 @@ Version 1.9.6 beta版【branch：dev】
   1.增加了Android10的适配，新代码放到了dev分支，其他没什么大的改动了
 
   2.哦对了，有朋友反应说开启/关闭按钮遮挡比例尺了，我把按钮往中间移动了一点
+  
 
 Version 1.9.5测试版
   
@@ -43,6 +45,7 @@ Version 1.9.5测试版
   5.增强了一下稳定性???我也不是很确定，不太好测试
   
   6.增加运行日志记录，目录为 你的手机/MockGPS/Log/xxx.log，这个是为了方便bug反馈和调试。有好几个人反应说定位来回跳，但我死活重现不了。所以加上这个运行日志记录，看看能不能找到问题在哪。但是我还没服务器，这个log文件怎么传给我还没想好，先改这些吧有空再说
+
 
 Version 1.9.4
 
