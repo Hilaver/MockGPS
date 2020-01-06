@@ -20,7 +20,7 @@ __安装包路径: app\release\MockGPS_v1.9.5.190604_alpha.apk__
 
 Version 1.9.6 beta版【branch：dev】
   
-  签名apk的目录 ./app/release/MockGPS_v1.9.6.191111_beta.apk
+  签名apk的目录 ./app/release/MockGPS_v1.9.6.191114_beta.apk
   
   下载链接：https://github.com/Hilaver/MockGPS/raw/dev/app/release/MockGPS_v1.9.6.191114_beta.apk
 
