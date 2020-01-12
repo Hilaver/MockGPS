@@ -6,7 +6,7 @@ Author：Nero
 
 __目前仅适用于百度地图和高德地图的SDK定位，腾讯系列无法使用__
 
-__安装包路径: app\release\MockGPS_v1.9.5.190604_alpha.apk__
+__安装包路径: app\release\MockGPS_v1.9.6.191114_beta.apk__
 
 需要开启 __开发者选项中的位置模拟__
 
